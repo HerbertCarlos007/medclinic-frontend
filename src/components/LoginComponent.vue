@@ -14,7 +14,7 @@ const login = async () => {
   try {
     const response = await loginService.login(loginForm);
     localStorage.setItem("token", response.access_token);
-    localStorage.setItem("clinic_id", response.user.clinic_id);
+    localStorage.setItem("clinicId", response.user.clinic_id);
     router.push("/schedule");
   } catch (error) {
     console.error('Login error:', error);

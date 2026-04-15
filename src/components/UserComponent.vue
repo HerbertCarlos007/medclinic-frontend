@@ -1,32 +1,68 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, onMounted, reactive } from "vue";
+import userService from "../services/user";
 import {
-  Search, Plus, MoreHorizontal, Shield, UserCheck,
-  Mail, Phone, Calendar, X, Eye, EyeOff,
+  Search,
+  Plus,
+  MoreHorizontal,
+  Shield,
+  UserCheck,
+  Mail,
+  Phone,
+  Calendar,
+  X,
+  Eye,
+  EyeOff,
 } from "lucide-vue-next";
+
+const clinicId = localStorage.getItem("clinicId");
+
+const users = ref([]);
 
 const search = ref("");
 const filterRole = ref("todos");
 const showModal = ref(false);
 const showPassword = ref(false);
 
-const form = ref({ name: "", email: "", phone: "", role: "recepcionista", status: "Ativo" });
+const userForm = reactive({
+  clinic_id: clinicId,
+  name: "",
+  email: "",
+  role: "",
+  password: "",
+});
 
-const users = ref([
-  { id: 1, name: "Dr. Ricardo Souza", initials: "RS", email: "ricardo@medclinic.com", phone: "(11) 98888-0001", role: "Administrador", status: "Ativo", since: "01/01/2024" },
-  { id: 2, name: "Camila Torres", initials: "CT", email: "camila@medclinic.com", phone: "(11) 98888-0002", role: "Recepcionista", status: "Ativo", since: "15/03/2024" },
-  { id: 3, name: "Felipe Andrade", initials: "FA", email: "felipe@medclinic.com", phone: "(11) 98888-0003", role: "Recepcionista", status: "Ativo", since: "20/04/2024" },
-  { id: 4, name: "Beatriz Nunes", initials: "BN", email: "beatriz@medclinic.com", phone: "(11) 98888-0004", role: "Administrador", status: "Ativo", since: "10/02/2024" },
-  { id: 5, name: "Lucas Ferreira", initials: "LF", email: "lucas@medclinic.com", phone: "(11) 98888-0005", role: "Recepcionista", status: "Inativo", since: "05/06/2024" },
-  { id: 6, name: "Mariana Costa", initials: "MC", email: "mariana@medclinic.com", phone: "(11) 98888-0006", role: "Financeiro", status: "Ativo", since: "12/07/2024" },
-  { id: 7, name: "Thiago Lima", initials: "TL", email: "thiago@medclinic.com", phone: "(11) 98888-0007", role: "Financeiro", status: "Ativo", since: "08/08/2024" },
-  { id: 8, name: "Juliana Ramos", initials: "JR", email: "juliana@medclinic.com", phone: "(11) 98888-0008", role: "Recepcionista", status: "Inativo", since: "01/09/2024" },
-]);
+onMounted(() => {
+  getUsers();
+});
+
+// const users = ref([
+//   { id: 1, name: "Dr. Ricardo Souza", initials: "RS", email: "ricardo@medclinic.com", phone: "(11) 98888-0001", role: "Administrador", status: "Ativo", since: "01/01/2024" },
+//   { id: 2, name: "Camila Torres", initials: "CT", email: "camila@medclinic.com", phone: "(11) 98888-0002", role: "Recepcionista", status: "Ativo", since: "15/03/2024" },
+//   { id: 3, name: "Felipe Andrade", initials: "FA", email: "felipe@medclinic.com", phone: "(11) 98888-0003", role: "Recepcionista", status: "Ativo", since: "20/04/2024" },
+//   { id: 4, name: "Beatriz Nunes", initials: "BN", email: "beatriz@medclinic.com", phone: "(11) 98888-0004", role: "Administrador", status: "Ativo", since: "10/02/2024" },
+//   { id: 5, name: "Lucas Ferreira", initials: "LF", email: "lucas@medclinic.com", phone: "(11) 98888-0005", role: "Recepcionista", status: "Inativo", since: "05/06/2024" },
+//   { id: 6, name: "Mariana Costa", initials: "MC", email: "mariana@medclinic.com", phone: "(11) 98888-0006", role: "Financeiro", status: "Ativo", since: "12/07/2024" },
+//   { id: 7, name: "Thiago Lima", initials: "TL", email: "thiago@medclinic.com", phone: "(11) 98888-0007", role: "Financeiro", status: "Ativo", since: "08/08/2024" },
+//   { id: 8, name: "Juliana Ramos", initials: "JR", email: "juliana@medclinic.com", phone: "(11) 98888-0008", role: "Recepcionista", status: "Inativo", since: "01/09/2024" },
+// ]);
 
 const roleStyle = (role) => {
-  if (role === "Administrador") return { badge: "bg-purple-50 text-purple-700 border border-purple-200", icon: "text-purple-400" };
-  if (role === "Recepcionista") return { badge: "bg-teal-50 text-teal-700 border border-teal-200", icon: "text-teal-400" };
-  if (role === "Financeiro") return { badge: "bg-blue-50 text-blue-700 border border-blue-200", icon: "text-blue-400" };
+  if (role === "Administrador")
+    return {
+      badge: "bg-purple-50 text-purple-700 border border-purple-200",
+      icon: "text-purple-400",
+    };
+  if (role === "Recepcionista")
+    return {
+      badge: "bg-teal-50 text-teal-700 border border-teal-200",
+      icon: "text-teal-400",
+    };
+  if (role === "Financeiro")
+    return {
+      badge: "bg-blue-50 text-blue-700 border border-blue-200",
+      icon: "text-blue-400",
+    };
   return { badge: "bg-gray-100 text-gray-500", icon: "text-gray-400" };
 };
 
@@ -50,9 +86,10 @@ const filtered = computed(() =>
       u.name.toLowerCase().includes(search.value.toLowerCase()) ||
       u.email.toLowerCase().includes(search.value.toLowerCase()) ||
       u.role.toLowerCase().includes(search.value.toLowerCase());
-    const matchRole = filterRole.value === "todos" || u.role === filterRole.value;
+    const matchRole =
+      filterRole.value === "todos" || u.role === filterRole.value;
     return matchSearch && matchRole;
-  })
+  }),
 );
 
 const stats = computed(() => ({
@@ -63,25 +100,27 @@ const stats = computed(() => ({
 }));
 
 function openModal() {
-  form.value = { name: "", email: "", phone: "", role: "Recepcionista", status: "Ativo", password: "" };
+  // userForm.value = {clinic_id: clinicId,  name: "", email: "", role: "", password: ""};
   showModal.value = true;
 }
 
-function addUser() {
-  if (!form.value.name || !form.value.email) return;
-  const initials = form.value.name.split(" ").slice(0, 2).map((w) => w[0].toUpperCase()).join("");
-  users.value.unshift({
-    id: Date.now(),
-    name: form.value.name,
-    initials,
-    email: form.value.email,
-    phone: form.value.phone,
-    role: form.value.role,
-    status: form.value.status,
-    since: new Date().toLocaleDateString("pt-BR"),
-  });
-  showModal.value = false;
-}
+const getUsers = async () => {
+  try {
+    const response = await userService.getUsers(clinicId);
+    users.value = response.data;
+  } catch (error) {
+    console.log("Error fetching users:", error);
+  }
+};
+
+const createUser = async () => {
+  try {
+    await userService.createUser(userForm);
+    showModal.value = false;
+  } catch (error) {
+    console.log("Error creating user:", error);
+  }
+};
 
 function toggleStatus(user) {
   user.status = user.status === "Ativo" ? "Inativo" : "Ativo";
@@ -94,7 +133,9 @@ function toggleStatus(user) {
     <div class="flex items-center justify-between mb-6">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">Usuarios</h1>
-        <p class="text-sm text-gray-400 mt-0.5">Gerencie os funcionarios e acessos do sistema</p>
+        <p class="text-sm text-gray-400 mt-0.5">
+          Gerencie os funcionarios e acessos do sistema
+        </p>
       </div>
       <button
         @click="openModal"
@@ -116,7 +157,9 @@ function toggleStatus(user) {
       </div>
       <div class="bg-white rounded-xl border border-gray-200 p-4">
         <p class="text-xs text-gray-400 mb-1">Recepcionistas</p>
-        <p class="text-2xl font-bold text-teal-600">{{ stats.recepcionistas }}</p>
+        <p class="text-2xl font-bold text-teal-600">
+          {{ stats.recepcionistas }}
+        </p>
       </div>
       <div class="bg-white rounded-xl border border-gray-200 p-4">
         <p class="text-xs text-gray-400 mb-1">Usuarios Ativos</p>
@@ -125,9 +168,14 @@ function toggleStatus(user) {
     </div>
 
     <!-- Search + Filters -->
-    <div class="bg-white rounded-xl border border-gray-200 px-4 py-4 mb-4 flex items-center gap-4">
+    <div
+      class="bg-white rounded-xl border border-gray-200 px-4 py-4 mb-4 flex items-center gap-4"
+    >
       <div class="relative w-72">
-        <Search size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+        <Search
+          size="15"
+          class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+        />
         <input
           v-model="search"
           type="text"
@@ -157,12 +205,19 @@ function toggleStatus(user) {
       <table class="w-full text-sm">
         <thead>
           <tr class="border-b border-gray-100 bg-gray-50">
-            <th class="text-left text-gray-500 font-medium px-6 py-3">Usuario</th>
-            <th class="text-left text-gray-500 font-medium px-6 py-3">Contato</th>
+            <th class="text-left text-gray-500 font-medium px-6 py-3">
+              Usuario
+            </th>
+            <th class="text-left text-gray-500 font-medium px-6 py-3">
+              Contato
+            </th>
             <th class="text-left text-gray-500 font-medium px-6 py-3">Cargo</th>
-            <th class="text-left text-gray-500 font-medium px-6 py-3">Status</th>
-            <th class="text-left text-gray-500 font-medium px-6 py-3">Desde</th>
-            <th class="text-right text-gray-500 font-medium px-6 py-3">Acoes</th>
+            <th class="text-left text-gray-500 font-medium px-6 py-3">
+              Status
+            </th>
+            <th class="text-right text-gray-500 font-medium px-6 py-3">
+              Acoes
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -174,7 +229,12 @@ function toggleStatus(user) {
             <!-- Usuario -->
             <td class="px-6 py-4">
               <div class="flex items-center gap-3">
-                <div :class="['w-9 h-9 rounded-full font-bold text-xs flex items-center justify-center shrink-0', avatarColor(user.role)]">
+                <div
+                  :class="[
+                    'w-9 h-9 rounded-full font-bold text-xs flex items-center justify-center shrink-0',
+                    avatarColor(user.role),
+                  ]"
+                >
                   {{ user.initials }}
                 </div>
                 <div>
@@ -200,7 +260,12 @@ function toggleStatus(user) {
             <td class="px-6 py-4">
               <div class="flex items-center gap-1.5">
                 <Shield size="13" :class="roleStyle(user.role).icon" />
-                <span :class="['text-xs font-medium px-2.5 py-1 rounded-full', roleStyle(user.role).badge]">
+                <span
+                  :class="[
+                    'text-xs font-medium px-2.5 py-1 rounded-full',
+                    roleStyle(user.role).badge,
+                  ]"
+                >
                   {{ user.role }}
                 </span>
               </div>
@@ -208,17 +273,17 @@ function toggleStatus(user) {
 
             <!-- Status -->
             <td class="px-6 py-4">
-              <span :class="['text-xs font-medium px-2.5 py-1 rounded-full', statusStyle(user.status)]">
+              <span
+                :class="[
+                  'text-xs font-medium px-2.5 py-1 rounded-full',
+                  statusStyle(user.status),
+                ]"
+              >
                 {{ user.status }}
               </span>
             </td>
 
             <!-- Desde -->
-            <td class="px-6 py-4">
-              <div class="flex items-center gap-1.5 text-gray-500 text-xs">
-                <Calendar size="12" class="text-gray-400" /> {{ user.since }}
-              </div>
-            </td>
 
             <!-- Acoes -->
             <td class="px-6 py-4">
@@ -230,7 +295,9 @@ function toggleStatus(user) {
                 >
                   <UserCheck size="15" />
                 </button>
-                <button class="p-1.5 text-gray-400 hover:text-gray-700 rounded hover:bg-gray-100 transition-colors">
+                <button
+                  class="p-1.5 text-gray-400 hover:text-gray-700 rounded hover:bg-gray-100 transition-colors"
+                >
                   <MoreHorizontal size="15" />
                 </button>
               </div>
@@ -238,7 +305,10 @@ function toggleStatus(user) {
           </tr>
 
           <tr v-if="filtered.length === 0">
-            <td colspan="6" class="px-6 py-14 text-center text-gray-400 text-sm">
+            <td
+              colspan="6"
+              class="px-6 py-14 text-center text-gray-400 text-sm"
+            >
               Nenhum usuario encontrado.
             </td>
           </tr>
@@ -258,9 +328,14 @@ function toggleStatus(user) {
           <div class="flex items-center justify-between mb-5">
             <div>
               <h2 class="text-lg font-bold text-gray-900">Novo Usuario</h2>
-              <p class="text-xs text-gray-400">Preencha os dados do funcionario</p>
+              <p class="text-xs text-gray-400">
+                Preencha os dados do funcionario
+              </p>
             </div>
-            <button @click="showModal = false" class="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
+            <button
+              @click="showModal = false"
+              class="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+            >
               <X size="18" />
             </button>
           </div>
@@ -268,26 +343,52 @@ function toggleStatus(user) {
           <!-- Form -->
           <div class="flex flex-col gap-4">
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Nome completo</label>
-              <input v-model="form.name" type="text" placeholder="Ex: Ana Paula Silva"
-                class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition" />
+              <label class="block text-xs font-medium text-gray-600 mb-1"
+                >Nome completo</label
+              >
+              <input
+                v-model="userForm.name"
+                type="text"
+                placeholder="Ex: Ana Paula Silva"
+                class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition"
+              />
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Email</label>
-              <input v-model="form.email" type="email" placeholder="usuario@medclinic.com"
-                class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition" />
+              <label class="block text-xs font-medium text-gray-600 mb-1"
+                >Email</label
+              >
+              <input
+                v-model="userForm.email"
+                type="email"
+                placeholder="usuario@medclinic.com"
+                class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition"
+              />
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Telefone</label>
-              <input v-model="form.phone" type="text" placeholder="(11) 99999-0000"
-                class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition" />
+              <label class="block text-xs font-medium text-gray-600 mb-1"
+                >Telefone</label
+              >
+              <input
+                type="text"
+                placeholder="(11) 99999-0000"
+                class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition"
+              />
             </div>
             <div>
-              <label class="block text-xs font-medium text-gray-600 mb-1">Senha provisoria</label>
+              <label class="block text-xs font-medium text-gray-600 mb-1"
+                >Senha provisoria</label
+              >
               <div class="relative">
-                <input v-model="form.password" :type="showPassword ? 'text' : 'password'" placeholder="••••••••"
-                  class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition pr-10" />
-                <button @click="showPassword = !showPassword" class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                <input
+                  v-model="userForm.password"
+                  :type="showPassword ? 'text' : 'password'"
+                  placeholder="••••••••"
+                  class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition pr-10"
+                />
+                <button
+                  @click="showPassword = !showPassword"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
                   <Eye v-if="!showPassword" size="15" />
                   <EyeOff v-else size="15" />
                 </button>
@@ -295,18 +396,25 @@ function toggleStatus(user) {
             </div>
             <div class="grid grid-cols-2 gap-3">
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Cargo</label>
-                <select v-model="form.role"
-                  class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition bg-white">
-                  <option>Administrador</option>
-                  <option>Recepcionista</option>
-                  <option>Financeiro</option>
+                <label class="block text-xs font-medium text-gray-600 mb-1"
+                  >Cargo</label
+                >
+                <select
+                  v-model="userForm.role"
+                  class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition bg-white"
+                >
+                  <option value="">Selecione</option>
+                  <option value="Administrador">Administrador</option>
+                  <option value="Recepcionista">Recepcionista</option>
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-medium text-gray-600 mb-1">Status</label>
-                <select v-model="form.status"
-                  class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition bg-white">
+                <label class="block text-xs font-medium text-gray-600 mb-1"
+                  >Status</label
+                >
+                <select
+                  class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition bg-white"
+                >
                   <option>Ativo</option>
                   <option>Inativo</option>
                 </select>
@@ -316,12 +424,16 @@ function toggleStatus(user) {
 
           <!-- Modal Footer -->
           <div class="flex gap-3 mt-6">
-            <button @click="showModal = false"
-              class="flex-1 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+            <button
+              @click="showModal = false"
+              class="flex-1 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
               Cancelar
             </button>
-            <button @click="addUser"
-              class="flex-1 py-2.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors">
+            <button
+              @click="createUser"
+              class="flex-1 py-2.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors"
+            >
               Cadastrar Usuario
             </button>
           </div>
