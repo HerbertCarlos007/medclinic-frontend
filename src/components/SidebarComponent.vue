@@ -17,12 +17,13 @@ const isActive = (path) => route.path === path;
 
 const menuItems = [
   { label: "Dashboard", icon: LayoutGrid, path: "/dashboard" },
-  { label: "Agenda", icon: Calendar, path: "/parking-entry" },
+  { label: "Agenda", icon: Calendar, path: "/schedule" },
   { label: "Pacientes", icon: Users, path: "/patient" },
-  { label: "Prontuário", icon: FileText, path: "/users" },
+  { label: "Prontuário", icon: FileText, path: "/medical-record" },
   { label: "Médicos", icon: Stethoscope, path: "/doctor" },
   { label: "Financeiro", icon: DollarSign, path: "/transactions" },
   { label: "Usuarios", icon: User, path: "/user" },
+   { label: "Clinicas", icon: User, path: "/clinic" },
 ];
 </script>
 

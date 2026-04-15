@@ -1,4 +1,27 @@
-<script setup></script>
+<script setup>
+import { reactive } from "vue";
+import { useRouter } from "vue-router";
+import loginService from "../services/login";
+
+const router = useRouter();
+
+const loginForm = reactive({
+  email: "",
+  password: "",
+});
+
+const login = async () => {
+  try {
+    const response = await loginService.login(loginForm);
+    localStorage.setItem("token", response.access_token);
+    localStorage.setItem("clinic_id", response.user.clinic_id);
+    router.push("/schedule");
+  } catch (error) {
+    console.error('Login error:', error);
+  }
+}
+
+</script>
 
 <template>
   <div class="flex min-h-screen">
@@ -30,11 +53,12 @@
           Entre com suas credenciais para acessar o sistema
         </p>
 
-        <form class="space-y-4">
+        <form @submit.prevent="login()" class="space-y-4">
           <div>
             <label class="block text-sm text-gray-600 mb-1">E-mail</label>
             <input
               type="email"
+              v-model="loginForm.email"
               class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-600"
             />
           </div>
@@ -43,6 +67,7 @@
             <label class="block text-sm text-gray-600 mb-1">Senha</label>
             <input
               type="password"
+              v-model="loginForm.password"
               class="w-full border rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-cyan-600"
             />
           </div>

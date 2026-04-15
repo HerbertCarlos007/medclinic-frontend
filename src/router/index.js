@@ -3,6 +3,9 @@ import LoginComponent from '../components/LoginComponent.vue'
 import PatientComponent from '../components/PatientComponent.vue'
 import DoctorComponent from '../components/DoctorComponent.vue'
 import UserComponent from '../components/UserComponent.vue'
+import MedicalRecordComponent from '../components/MedicalRecordComponent.vue'
+import ScheduleComponent from '../components/ScheduleComponent.vue'
+import ClinicComponent from '../components/ClinicComponent.vue'
 
 const routes = [
     {
@@ -28,12 +31,29 @@ const routes = [
         component: DoctorComponent
     },
 
-      {
+    {
         path: '/user',
         name: 'user',
         component: UserComponent
     },
 
+     {
+        path: '/medical-record',
+        name: 'medical',
+        component: MedicalRecordComponent
+    },
+
+     {
+        path: '/schedule',
+        name: 'schedule',
+        component: ScheduleComponent
+    },
+
+      {
+        path: '/clinic',
+        name: 'clinic',
+        component: ClinicComponent
+    },
 
 ]
 
