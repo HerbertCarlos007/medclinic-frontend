@@ -198,7 +198,7 @@ function submitForm() {
             </div>
             <div>
               <p class="font-semibold text-gray-900 text-sm">{{ doc.name }}</p>
-              <p class="text-xs text-gray-400">{{ doc.specialty }}</p>
+              <p class="text-xs text-gray-400">{{ doc.specialty.specialty_name }}</p>
             </div>
           </div>
           <button
