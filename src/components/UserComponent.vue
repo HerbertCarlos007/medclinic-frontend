@@ -96,7 +96,7 @@ const stats = computed(() => ({
   total: users.value.length,
   admins: users.value.filter((u) => u.role === "Administrador").length,
   recepcionistas: users.value.filter((u) => u.role === "Recepcionista").length,
-  ativos: users.value.filter((u) => u.status === "Ativo").length,
+  ativos: users.value.filter((u) => u.is_active === "Ativo").length,
 }));
 
 function openModal() {
@@ -123,7 +123,7 @@ const createUser = async () => {
 };
 
 function toggleStatus(user) {
-  user.status = user.status === "Ativo" ? "Inativo" : "Ativo";
+  user.is_active = user.is_active === "Ativo" ? "Inativo" : "Ativo";
 }
 </script>
 
@@ -276,10 +276,10 @@ function toggleStatus(user) {
               <span
                 :class="[
                   'text-xs font-medium px-2.5 py-1 rounded-full',
-                  statusStyle(user.status),
+                  statusStyle(user.is_active),
                 ]"
               >
-                {{ user.status }}
+                {{ user.is_active }}
               </span>
             </td>
 
@@ -290,7 +290,7 @@ function toggleStatus(user) {
               <div class="flex items-center justify-end gap-1">
                 <button
                   @click="toggleStatus(user)"
-                  :title="user.status === 'Ativo' ? 'Desativar' : 'Ativar'"
+                  :title="user.is_active === 'Ativo' ? 'Desativar' : 'Ativar'"
                   class="p-1.5 text-gray-400 hover:text-teal-600 rounded hover:bg-teal-50 transition-colors"
                 >
                   <UserCheck size="15" />
