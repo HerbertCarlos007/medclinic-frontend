@@ -67,7 +67,7 @@ const filtered = computed(() =>
   doctors.value.filter(
     (d) =>
       d.name.toLowerCase().includes(search.value.toLowerCase()) ||
-      d.specialty.toLowerCase().includes(search.value.toLowerCase()) ||
+      d.specialty.specialty_name.toLowerCase().includes(search.value.toLowerCase()) ||
       d.crm.toLowerCase().includes(search.value.toLowerCase()),
   ),
 );
@@ -116,11 +116,7 @@ function closeModal() {
   resetForm();
 }
 
-function submitForm() {
-  // lógica de cadastro aqui
-  console.log(doctorForm.value);
-  closeModal();
-}
+
 </script>
 
 <template>
