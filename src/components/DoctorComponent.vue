@@ -1,18 +1,45 @@
 <script setup>
-import { ref, computed } from "vue";
-import { Search, Plus, Stethoscope, Phone, Mail, Calendar, MoreHorizontal, LayoutGrid, List } from "lucide-vue-next";
+import { ref, computed, onMounted } from "vue";
+import { Search, Plus, Stethoscope, Phone, Mail, Calendar, MoreHorizontal, LayoutGrid, List, X } from "lucide-vue-next";
+import doctorService from '../services/doctor';  
 
+const clinicId = localStorage.getItem("clinicId");
+
+const doctors = ref([]);
 const search = ref("");
 const viewMode = ref("cards");
+const showModal = ref(false);
 
-const doctors = ref([
-  { id: 1, name: "Dr. Carlos Mendes", initials: "DC", specialty: "Clinico Geral", crm: "123456-SP", phone: "(11) 99999-1111", email: "carlos.mendes@medclinic.com", status: "Disponivel", consultasHoje: 8 },
-  { id: 2, name: "Dra. Ana Paula Silva", initials: "DA", specialty: "Cardiologia", crm: "234567-SP", phone: "(11) 99999-2222", email: "ana.paula@medclinic.com", status: "Em Consulta", consultasHoje: 6 },
-  { id: 3, name: "Dra. Julia Lima", initials: "DJ", specialty: "Pediatria", crm: "345678-SP", phone: "(11) 99999-3333", email: "julia.lima@medclinic.com", status: "Disponivel", consultasHoje: 10 },
-  { id: 4, name: "Dr. Roberto Santos", initials: "DR", specialty: "Ortopedia", crm: "456789-SP", phone: "(11) 99999-4444", email: "roberto.santos@medclinic.com", status: "Ausente", consultasHoje: 0 },
-  { id: 5, name: "Dra. Fernanda Costa", initials: "DF", specialty: "Dermatologia", crm: "567890-SP", phone: "(11) 99999-5555", email: "fernanda.costa@medclinic.com", status: "Disponivel", consultasHoje: 5 },
-  { id: 6, name: "Dr. Marcos Oliveira", initials: "DM", specialty: "Neurologia", crm: "678901-SP", phone: "(11) 99999-6666", email: "marcos.oliveira@medclinic.com", status: "Em Consulta", consultasHoje: 4 },
+const doctorForm = ref({
+  clinic_id: clinicId,
+  specialty_id: "",
+  name: "",
+  crm: "",
+  phone: "",
+  email: "",
+});
+
+onMounted(() => {
+  getDoctors();
+})
+
+const specialties = ref([
+  { id: 1, label: "Clínico Geral" },
+  { id: 2, label: "Cardiologia" },
+  { id: 3, label: "Pediatria" },
+  { id: 4, label: "Ortopedia" },
+  { id: 5, label: "Dermatologia" },
+  { id: 6, label: "Neurologia" },
 ]);
+
+// const doctors = ref([
+//   { id: 1, name: "Dr. Carlos Mendes", initials: "DC", specialty: "Clinico Geral", crm: "123456-SP", phone: "(11) 99999-1111", email: "carlos.mendes@medclinic.com", status: "Disponivel", consultasHoje: 8 },
+//   { id: 2, name: "Dra. Ana Paula Silva", initials: "DA", specialty: "Cardiologia", crm: "234567-SP", phone: "(11) 99999-2222", email: "ana.paula@medclinic.com", status: "Em Consulta", consultasHoje: 6 },
+//   { id: 3, name: "Dra. Julia Lima", initials: "DJ", specialty: "Pediatria", crm: "345678-SP", phone: "(11) 99999-3333", email: "julia.lima@medclinic.com", status: "Disponivel", consultasHoje: 10 },
+//   { id: 4, name: "Dr. Roberto Santos", initials: "DR", specialty: "Ortopedia", crm: "456789-SP", phone: "(11) 99999-4444", email: "roberto.santos@medclinic.com", status: "Ausente", consultasHoje: 0 },
+//   { id: 5, name: "Dra. Fernanda Costa", initials: "DF", specialty: "Dermatologia", crm: "567890-SP", phone: "(11) 99999-5555", email: "fernanda.costa@medclinic.com", status: "Disponivel", consultasHoje: 5 },
+//   { id: 6, name: "Dr. Marcos Oliveira", initials: "DM", specialty: "Neurologia", crm: "678901-SP", phone: "(11) 99999-6666", email: "marcos.oliveira@medclinic.com", status: "Em Consulta", consultasHoje: 4 },
+// ]);
 
 const statusStyle = (status) => {
   if (status === "Disponivel") return "bg-green-50 text-green-600 border border-green-200";
@@ -28,6 +55,43 @@ const filtered = computed(() =>
       d.crm.toLowerCase().includes(search.value.toLowerCase())
   )
 );
+
+const getDoctors = async () => {
+  try {
+    const response = await doctorService.getDoctors(clinicId);
+    doctors.value = response.data.map(doc => ({
+      ...doc,
+      initials: doc.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+    }));
+  } catch (error) {
+    console.error("Error fetching doctors:", error);
+  }
+}
+
+const createDoctor = async () => {
+  try {
+    await doctorService.createDoctor(doctorForm.value);
+
+    closeModal();
+  } catch (error) {
+    console.error("Error creating doctor:", error);
+  }
+}
+
+function resetForm() {
+  doctorForm.value = { specialty_id: "", name: "", crm: "", phone: "", email: "" };
+}
+
+function closeModal() {
+  showModal.value = false;
+  resetForm();
+}
+
+function submitForm() {
+  // lógica de cadastro aqui
+  console.log(doctorForm.value);
+  closeModal();
+}
 </script>
 
 <template>
@@ -38,7 +102,10 @@ const filtered = computed(() =>
         <h1 class="text-2xl font-bold text-gray-900">Medicos</h1>
         <p class="text-sm text-gray-400 mt-0.5">Gerencie a equipe medica</p>
       </div>
-      <button class="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
+      <button
+        @click="showModal = true"
+        class="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors"
+      >
         <Plus size="16" /> Novo Medico
       </button>
     </div>
@@ -173,6 +240,111 @@ const filtered = computed(() =>
         </tbody>
       </table>
     </div>
+
+    <!-- MODAL -->
+    <Teleport to="body">
+      <div
+        v-if="showModal"
+        class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+        @click.self="closeModal"
+      >
+        <div class="bg-white rounded-xl border border-gray-200 w-full max-w-md shadow-lg">
+
+          <!-- Header do modal -->
+          <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-teal-50 flex items-center justify-center">
+                <Stethoscope size="15" class="text-teal-600" />
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-gray-900">Novo médico</p>
+                <p class="text-xs text-gray-400">Preencha os dados do profissional</p>
+              </div>
+            </div>
+            <button @click="closeModal" class="text-gray-400 hover:text-gray-600 p-1 rounded transition-colors">
+              <X size="16" />
+            </button>
+          </div>
+
+          <!-- Campos -->
+          <div class="px-6 py-5 flex flex-col gap-4">
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Especialidade</label>
+              <select
+                v-model="doctorForm.specialty_id"
+                class="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 text-gray-700 transition"
+              >
+                <option value="" disabled>Selecione uma especialidade</option>
+                <option v-for="s in specialties" :key="s.id" :value="s.id">{{ s.label }}</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">Nome completo</label>
+              <input
+                v-model="doctorForm.name"
+                type="text"
+                placeholder="Ex: Dr. Carlos Mendes"
+                class="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 text-gray-700 placeholder-gray-400 transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-medium text-gray-500 mb-1.5">CRM</label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-gray-400 pointer-events-none">CRM</span>
+                <input
+                  v-model="doctorForm.crm"
+                  type="text"
+                  placeholder="123456-SP"
+                  class="w-full h-9 pl-10 pr-3 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 text-gray-700 placeholder-gray-400 transition"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">Telefone</label>
+                <input
+                  v-model="doctorForm.phone"
+                  type="tel"
+                  placeholder="(11) 99999-0000"
+                  class="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 text-gray-700 placeholder-gray-400 transition"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-500 mb-1.5">E-mail</label>
+                <input
+                  v-model="doctorForm.email"
+                  type="email"
+                  placeholder="email@medclinic.com"
+                  class="w-full h-9 px-3 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 text-gray-700 placeholder-gray-400 transition"
+                />
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Footer -->
+          <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-gray-100">
+            <button
+              @click="closeModal"
+              class="px-4 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              @click="createDoctor()"
+              class="flex items-center gap-1.5 px-4 py-2 text-sm font-medium bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors"
+            >
+              <Plus size="14" /> Cadastrar médico
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
