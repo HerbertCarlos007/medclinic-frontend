@@ -30,7 +30,9 @@ const userForm = reactive({
   email: "",
   role: "",
   password: "",
+  is_active: "",
 });
+
 
 onMounted(() => {
   getUsers();
@@ -122,9 +124,21 @@ const createUser = async () => {
   }
 };
 
-function toggleStatus(user) {
-  user.is_active = user.is_active === "Ativo" ? "Inativo" : "Ativo";
-}
+const updateIsActive = async (user) => {
+  try {
+    const newStatus = user.is_active === "Ativo" ? "Inativo" : "Ativo";
+
+    await userService.updateIsActive(user.id, {
+      is_active: newStatus
+    });
+
+    getUsers();
+  } catch (error) {
+    console.error("Error updating user status:", error);
+  }
+};
+
+
 </script>
 
 <template>
@@ -289,7 +303,7 @@ function toggleStatus(user) {
             <td class="px-6 py-4">
               <div class="flex items-center justify-end gap-1">
                 <button
-                  @click="toggleStatus(user)"
+                  @click="updateIsActive(user)"
                   :title="user.is_active === 'Ativo' ? 'Desativar' : 'Ativar'"
                   class="p-1.5 text-gray-400 hover:text-teal-600 rounded hover:bg-teal-50 transition-colors"
                 >

@@ -18,7 +18,17 @@ async function getUsers(clinicId) {
     }
 }
 
+async function updateIsActive(userId, userData) {
+    try {
+        const response = await api.patch(`user/is-active/${userId}`, userData);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating user status:', error);
+    }
+}
+
 export default {
     createUser,
-    getUsers
+    getUsers,
+    updateIsActive
 }
