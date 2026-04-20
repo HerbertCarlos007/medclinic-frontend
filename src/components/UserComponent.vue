@@ -13,6 +13,7 @@ import {
   X,
   Eye,
   EyeOff,
+  Pencil,
 } from "lucide-vue-next";
 
 const clinicId = localStorage.getItem("clinicId");
@@ -22,7 +23,9 @@ const users = ref([]);
 const search = ref("");
 const filterRole = ref("todos");
 const showModal = ref(false);
+const showEditModal = ref(false);
 const showPassword = ref(false);
+const showEditPassword = ref(false);
 
 const userForm = reactive({
   clinic_id: clinicId,
@@ -33,21 +36,19 @@ const userForm = reactive({
   is_active: "",
 });
 
+const editForm = reactive({
+  id: null,
+  name: "",
+  email: "",
+  phone: "",
+  role: "",
+  password: "",
+  is_active: "",
+});
 
 onMounted(() => {
   getUsers();
 });
-
-// const users = ref([
-//   { id: 1, name: "Dr. Ricardo Souza", initials: "RS", email: "ricardo@medclinic.com", phone: "(11) 98888-0001", role: "Administrador", status: "Ativo", since: "01/01/2024" },
-//   { id: 2, name: "Camila Torres", initials: "CT", email: "camila@medclinic.com", phone: "(11) 98888-0002", role: "Recepcionista", status: "Ativo", since: "15/03/2024" },
-//   { id: 3, name: "Felipe Andrade", initials: "FA", email: "felipe@medclinic.com", phone: "(11) 98888-0003", role: "Recepcionista", status: "Ativo", since: "20/04/2024" },
-//   { id: 4, name: "Beatriz Nunes", initials: "BN", email: "beatriz@medclinic.com", phone: "(11) 98888-0004", role: "Administrador", status: "Ativo", since: "10/02/2024" },
-//   { id: 5, name: "Lucas Ferreira", initials: "LF", email: "lucas@medclinic.com", phone: "(11) 98888-0005", role: "Recepcionista", status: "Inativo", since: "05/06/2024" },
-//   { id: 6, name: "Mariana Costa", initials: "MC", email: "mariana@medclinic.com", phone: "(11) 98888-0006", role: "Financeiro", status: "Ativo", since: "12/07/2024" },
-//   { id: 7, name: "Thiago Lima", initials: "TL", email: "thiago@medclinic.com", phone: "(11) 98888-0007", role: "Financeiro", status: "Ativo", since: "08/08/2024" },
-//   { id: 8, name: "Juliana Ramos", initials: "JR", email: "juliana@medclinic.com", phone: "(11) 98888-0008", role: "Recepcionista", status: "Inativo", since: "01/09/2024" },
-// ]);
 
 const roleStyle = (role) => {
   if (role === "Administrador")
@@ -102,8 +103,19 @@ const stats = computed(() => ({
 }));
 
 function openModal() {
-  // userForm.value = {clinic_id: clinicId,  name: "", email: "", role: "", password: ""};
   showModal.value = true;
+}
+
+function openEditModal(user) {
+  editForm.id = user.id;
+  editForm.name = user.name;
+  editForm.email = user.email;
+  editForm.phone = user.phone || "";
+  editForm.role = user.role;
+  editForm.password = "";
+  editForm.is_active = user.is_active;
+  showEditPassword.value = false;
+  showEditModal.value = true;
 }
 
 const getUsers = async () => {
@@ -119,26 +131,33 @@ const createUser = async () => {
   try {
     await userService.createUser(userForm);
     showModal.value = false;
+    getUsers();
   } catch (error) {
     console.log("Error creating user:", error);
+  }
+};
+
+const updateUser = async () => {
+  try {
+    await userService.updateUser(editForm.id, editForm);
+    showEditModal.value = false;
+     getUsers();
+  } catch (error) {
+    console.error("Error updating user:", error);
   }
 };
 
 const updateIsActive = async (user) => {
   try {
     const newStatus = user.is_active === "Ativo" ? "Inativo" : "Ativo";
-
     await userService.updateIsActive(user.id, {
-      is_active: newStatus
+      is_active: newStatus,
     });
-
     getUsers();
   } catch (error) {
     console.error("Error updating user status:", error);
   }
 };
-
-
 </script>
 
 <template>
@@ -297,8 +316,6 @@ const updateIsActive = async (user) => {
               </span>
             </td>
 
-            <!-- Desde -->
-
             <!-- Acoes -->
             <td class="px-6 py-4">
               <div class="flex items-center justify-end gap-1">
@@ -309,10 +326,13 @@ const updateIsActive = async (user) => {
                 >
                   <UserCheck size="15" />
                 </button>
+
                 <button
-                  class="p-1.5 text-gray-400 hover:text-gray-700 rounded hover:bg-gray-100 transition-colors"
+                  @click="openEditModal(user)"
+                  title="Editar usuario"
+                  class="p-1.5 text-gray-400 hover:text-teal-600 rounded hover:bg-teal-50 transition-colors"
                 >
-                  <MoreHorizontal size="15" />
+                  <Pencil size="15" />
                 </button>
               </div>
             </td>
@@ -427,6 +447,7 @@ const updateIsActive = async (user) => {
                   >Status</label
                 >
                 <select
+                  v-model="userForm.is_active"
                   class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition bg-white"
                 >
                   <option>Ativo</option>
@@ -449,6 +470,137 @@ const updateIsActive = async (user) => {
               class="flex-1 py-2.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors"
             >
               Cadastrar Usuario
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Modal Editar Usuario -->
+    <Teleport to="body">
+      <div
+        v-if="showEditModal"
+        class="fixed inset-0 bg-black/40 flex items-center justify-center z-50"
+        @click.self="showEditModal = false"
+      >
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+          <!-- Modal Header -->
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h2 class="text-lg font-bold text-gray-900">Editar Usuario</h2>
+              <p class="text-xs text-gray-400">
+                Atualize os dados do funcionario
+              </p>
+            </div>
+            <button
+              @click="showEditModal = false"
+              class="p-1.5 text-gray-400 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+            >
+              <X size="18" />
+            </button>
+          </div>
+
+          <!-- Form -->
+          <div class="flex flex-col gap-4">
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1"
+                >Nome completo</label
+              >
+              <input
+                v-model="editForm.name"
+                type="text"
+                placeholder="Ex: Ana Paula Silva"
+                class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1"
+                >Email</label
+              >
+              <input
+                v-model="editForm.email"
+                type="email"
+                placeholder="usuario@medclinic.com"
+                class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1"
+                >Telefone</label
+              >
+              <input
+                v-model="editForm.phone"
+                type="text"
+                placeholder="(11) 99999-0000"
+                class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition"
+              />
+            </div>
+            <div>
+              <label class="block text-xs font-medium text-gray-600 mb-1"
+                >Nova senha
+                <span class="text-gray-400 font-normal"
+                  >(deixe em branco para manter)</span
+                >
+              </label>
+              <div class="relative">
+                <input
+                  v-model="editForm.password"
+                  :type="showEditPassword ? 'text' : 'password'"
+                  placeholder="••••••••"
+                  class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition pr-10"
+                />
+                <button
+                  @click="showEditPassword = !showEditPassword"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <Eye v-if="!showEditPassword" size="15" />
+                  <EyeOff v-else size="15" />
+                </button>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1"
+                  >Cargo</label
+                >
+                <select
+                  v-model="editForm.role"
+                  class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition bg-white"
+                >
+                  <option value="">Selecione</option>
+                  <option value="Administrador">Administrador</option>
+                  <option value="Recepcionista">Recepcionista</option>
+                  <option value="Financeiro">Financeiro</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1"
+                  >Status</label
+                >
+                <select
+                  v-model="editForm.is_active"
+                  class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg outline-none focus:border-teal-400 focus:ring-2 focus:ring-teal-100 transition bg-white"
+                >
+                  <option>Ativo</option>
+                  <option>Inativo</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="flex gap-3 mt-6">
+            <button
+              @click="showEditModal = false"
+              class="flex-1 py-2.5 text-sm font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              @click="updateUser"
+              class="flex-1 py-2.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 rounded-lg transition-colors"
+            >
+              Salvar Alteracoes
             </button>
           </div>
         </div>
