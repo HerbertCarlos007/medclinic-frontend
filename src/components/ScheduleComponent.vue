@@ -1,9 +1,36 @@
 <script setup>
 import { ref, computed } from "vue";
-import { ChevronLeft, ChevronRight, Plus, Stethoscope, Clock } from "lucide-vue-next";
+import { ChevronLeft, ChevronRight, Plus, Stethoscope, Clock, X, User } from "lucide-vue-next";
+
+// --- Modal ---
+const showModal = ref(false);
+const newAppointment = ref({
+  patient: "",
+  doctor: "Dr. Carlos Mendes",
+  date: "",
+  time: "08:00",
+  type: "Consulta",
+});
+
+const doctors = ["Dr. Carlos Mendes", "Dra. Ana Paula", "Dra. Julia Lima"];
+const timeSlots = ["08:00","08:30","09:00","09:30","10:00","10:30","11:00","11:30","12:00","14:00","14:30","15:00"];
+const appointmentTypes = ["Consulta", "Retorno", "Exame", "Primeira Consulta"];
+
+function openModal() {
+  showModal.value = true;
+}
+function closeModal() {
+  showModal.value = false;
+  newAppointment.value = { patient: "", doctor: "Dr. Carlos Mendes", date: "", time: "08:00", type: "Consulta" };
+}
+function scheduleAppointment() {
+  // Aqui você pode adicionar a lógica para salvar a consulta
+  console.log("Consulta agendada:", newAppointment.value);
+  closeModal();
+}
 
 // --- Calendar logic ---
-const today = new Date(2026, 2, 30); // March 30 2026
+const today = new Date(2026, 2, 30);
 const selectedDate = ref(new Date(2026, 2, 30));
 const currentMonth = ref(new Date(2026, 2, 1));
 const viewMode = ref("dia");
@@ -102,7 +129,10 @@ const shortDayNames = ["Seg","Ter","Qua","Qui","Sex","Sab","Dom"];
         <h1 class="text-2xl font-bold text-gray-900">Agenda</h1>
         <p class="text-sm text-gray-400 mt-0.5">Gerencie as consultas e atendimentos</p>
       </div>
-      <button class="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
+      <button
+        @click="openModal"
+        class="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors"
+      >
         <Plus size="16" /> Nova Consulta
       </button>
     </div>
@@ -110,7 +140,6 @@ const shortDayNames = ["Seg","Ter","Qua","Qui","Sex","Sab","Dom"];
     <div class="flex gap-5 items-start">
       <!-- LEFT: Mini Calendar -->
       <div class="w-80 shrink-0 bg-white rounded-xl border border-gray-200 p-5">
-        <!-- Month nav -->
         <div class="flex items-center justify-between mb-4">
           <span class="font-semibold text-gray-800 text-sm">{{ monthLabel }}</span>
           <div class="flex gap-1">
@@ -122,15 +151,11 @@ const shortDayNames = ["Seg","Ter","Qua","Qui","Sex","Sab","Dom"];
             </button>
           </div>
         </div>
-
-        <!-- Day headers -->
         <div class="grid grid-cols-7 mb-2">
           <div v-for="d in dayNames" :key="d" class="text-center text-xs text-gray-400 font-medium py-1">
             {{ d }}
           </div>
         </div>
-
-        <!-- Days grid -->
         <div class="grid grid-cols-7 gap-y-1">
           <div v-for="(day, i) in calendarDays" :key="i" class="flex items-center justify-center">
             <button
@@ -154,7 +179,6 @@ const shortDayNames = ["Seg","Ter","Qua","Qui","Sex","Sab","Dom"];
 
       <!-- RIGHT: Schedule -->
       <div class="flex-1 bg-white rounded-xl border border-gray-200 overflow-hidden">
-        <!-- Schedule header -->
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
           <div>
             <p class="font-semibold text-gray-800 text-sm capitalize">{{ selectedLabel }}</p>
@@ -179,18 +203,13 @@ const shortDayNames = ["Seg","Ter","Qua","Qui","Sex","Sab","Dom"];
             :key="i"
             class="flex items-start gap-4 px-6 py-3 hover:bg-gray-50 transition-colors"
           >
-            <!-- Time -->
             <span class="text-sm text-gray-400 w-12 shrink-0 pt-1">{{ slot.time }}</span>
-
-            <!-- Empty slot -->
             <div
               v-if="!slot.patient"
               class="flex-1 border border-dashed border-gray-200 rounded-lg py-2.5 px-4 text-sm text-gray-300 text-center"
             >
               Horario disponivel
             </div>
-
-            <!-- Appointment -->
             <div
               v-else
               class="flex-1 bg-teal-50 border-l-4 border-teal-500 rounded-lg px-4 py-2.5 flex items-center justify-between"
@@ -262,10 +281,132 @@ const shortDayNames = ["Seg","Ter","Qua","Qui","Sex","Sab","Dom"];
             </tbody>
           </table>
         </div>
-
       </div>
     </div>
+
+    <!-- MODAL Nova Consulta -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div
+          v-if="showModal"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          <!-- Backdrop -->
+          <div
+            class="absolute inset-0 bg-black/30 backdrop-blur-sm"
+            @click="closeModal"
+          />
+
+          <!-- Modal box -->
+          <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-md p-6 z-10">
+            <!-- Header -->
+            <div class="flex items-center justify-between mb-5">
+              <h2 class="text-base font-bold text-gray-900">Nova Consulta</h2>
+              <button
+                @click="closeModal"
+                class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size="18" />
+              </button>
+            </div>
+
+            <!-- Form -->
+            <div class="space-y-4">
+              <!-- Paciente -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Paciente</label>
+                <div class="relative">
+                  <User size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    v-model="newAppointment.patient"
+                    type="text"
+                    placeholder="Nome do paciente"
+                    class="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                  />
+                </div>
+              </div>
+
+              <!-- Médico -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Médico</label>
+                <select
+                  v-model="newAppointment.doctor"
+                  class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition appearance-none bg-white"
+                >
+                  <option v-for="doc in doctors" :key="doc" :value="doc">{{ doc }}</option>
+                </select>
+              </div>
+
+              <!-- Data + Horário -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Data</label>
+                  <input
+                    v-model="newAppointment.date"
+                    type="date"
+                    class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Horário</label>
+                  <select
+                    v-model="newAppointment.time"
+                    class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition appearance-none bg-white"
+                  >
+                    <option v-for="t in timeSlots" :key="t" :value="t">{{ t }}</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Tipo -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Tipo</label>
+                <select
+                  v-model="newAppointment.type"
+                  class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition appearance-none bg-white"
+                >
+                  <option v-for="t in appointmentTypes" :key="t" :value="t">{{ t }}</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3 mt-6">
+              <button
+                @click="closeModal"
+                class="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                @click="scheduleAppointment"
+                class="flex-1 px-4 py-2.5 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium transition-colors"
+              >
+                Agendar
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+.modal-enter-active .relative,
+.modal-leave-active .relative {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+.modal-enter-from .relative {
+  transform: scale(0.95) translateY(8px);
+  opacity: 0;
+}
+</style>

@@ -54,6 +54,7 @@ const routes = [
         name: 'clinic',
         component: ClinicComponent
     },
+    
 
 ]
 

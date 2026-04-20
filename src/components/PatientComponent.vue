@@ -1,8 +1,65 @@
 <script setup>
 import { ref, computed } from "vue";
-import { Search, Phone, Mail, Eye, MoreHorizontal, Plus } from "lucide-vue-next";
+import { Search, Phone, Mail, Eye, MoreHorizontal, Plus, X, User, CreditCard, Calendar } from "lucide-vue-next";
 
 const search = ref("");
+
+// --- Modal ---
+const showModal = ref(false);
+const newPatient = ref({
+  name: "",
+  birth: "",
+  cpf: "",
+  phone: "",
+  email: "",
+  gender: "",
+  address: "",
+});
+
+function openModal() {
+  showModal.value = true;
+}
+function closeModal() {
+  showModal.value = false;
+  newPatient.value = { name: "", birth: "", cpf: "", phone: "", email: "", gender: "", address: "" };
+}
+function savePatient() {
+  if (!newPatient.value.name) return;
+  const initials = newPatient.value.name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join("");
+  patients.value.unshift({
+    id: Date.now(),
+    name: newPatient.value.name,
+    initials,
+    birth: newPatient.value.birth,
+    cpf: newPatient.value.cpf,
+    phone: newPatient.value.phone,
+    email: newPatient.value.email,
+    lastVisit: "—",
+  });
+  closeModal();
+}
+
+// CPF mask
+function onCpfInput(e) {
+  let v = e.target.value.replace(/\D/g, "").slice(0, 11);
+  v = v.replace(/(\d{3})(\d)/, "$1.$2");
+  v = v.replace(/(\d{3})(\d)/, "$1.$2");
+  v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  newPatient.value.cpf = v;
+}
+
+// Phone mask
+function onPhoneInput(e) {
+  let v = e.target.value.replace(/\D/g, "").slice(0, 11);
+  v = v.replace(/^(\d{2})(\d)/, "($1) $2");
+  v = v.replace(/(\d{5})(\d)/, "$1-$2");
+  newPatient.value.phone = v;
+}
 
 const patients = ref([
   { id: 1, name: "Maria Silva Santos", initials: "MS", birth: "15/03/1985", cpf: "123.456.789-00", phone: "(11) 99999-1234", email: "maria.silva@email.com", lastVisit: "28/03/2026" },
@@ -33,6 +90,7 @@ const filtered = computed(() =>
         <p class="text-sm text-gray-400 mt-0.5">Gerencie o cadastro de pacientes</p>
       </div>
       <button
+        @click="openModal"
         class="flex items-center gap-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors"
       >
         <Plus size="16" />
@@ -71,7 +129,6 @@ const filtered = computed(() =>
             :key="patient.id"
             class="border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors"
           >
-            <!-- Paciente -->
             <td class="px-6 py-4">
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-full bg-teal-50 text-teal-700 flex items-center justify-center text-xs font-bold shrink-0">
@@ -83,11 +140,7 @@ const filtered = computed(() =>
                 </div>
               </div>
             </td>
-
-            <!-- CPF -->
             <td class="px-6 py-4 text-gray-600">{{ patient.cpf }}</td>
-
-            <!-- Contato -->
             <td class="px-6 py-4">
               <div class="flex flex-col gap-1">
                 <span class="flex items-center gap-1.5 text-gray-600">
@@ -98,11 +151,7 @@ const filtered = computed(() =>
                 </span>
               </div>
             </td>
-
-            <!-- Ultima Consulta -->
             <td class="px-6 py-4 text-gray-600">{{ patient.lastVisit }}</td>
-
-            <!-- Acoes -->
             <td class="px-6 py-4">
               <div class="flex items-center justify-end gap-2">
                 <button class="p-1.5 text-gray-400 hover:text-teal-600 rounded hover:bg-teal-50 transition-colors">
@@ -114,8 +163,6 @@ const filtered = computed(() =>
               </div>
             </td>
           </tr>
-
-          <!-- Empty state -->
           <tr v-if="filtered.length === 0">
             <td colspan="5" class="px-6 py-12 text-center text-gray-400 text-sm">
               Nenhum paciente encontrado.
@@ -124,7 +171,174 @@ const filtered = computed(() =>
         </tbody>
       </table>
     </div>
+
+    <!-- MODAL Novo Paciente -->
+    <Teleport to="body">
+      <Transition name="modal">
+        <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <!-- Backdrop -->
+          <div class="absolute inset-0 bg-black/30 backdrop-blur-sm" @click="closeModal" />
+
+          <!-- Modal box -->
+          <div class="relative bg-white rounded-2xl shadow-xl w-full max-w-lg z-10">
+            <!-- Header -->
+            <div class="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+              <h2 class="text-base font-bold text-gray-900">Novo Paciente</h2>
+              <button
+                @click="closeModal"
+                class="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X size="18" />
+              </button>
+            </div>
+
+            <!-- Body -->
+            <div class="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+
+              <!-- Nome completo -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Nome completo <span class="text-red-400">*</span></label>
+                <div class="relative">
+                  <User size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    v-model="newPatient.name"
+                    type="text"
+                    placeholder="Nome completo do paciente"
+                    class="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                  />
+                </div>
+              </div>
+
+              <!-- CPF + Data de Nascimento -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">CPF</label>
+                  <div class="relative">
+                    <CreditCard size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      :value="newPatient.cpf"
+                      @input="onCpfInput"
+                      type="text"
+                      placeholder="000.000.000-00"
+                      class="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Data de Nascimento</label>
+                  <div class="relative">
+                    <Calendar size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      v-model="newPatient.birth"
+                      type="date"
+                      class="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sexo -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Sexo</label>
+                <div class="flex gap-2">
+                  <button
+                    v-for="opt in ['Masculino', 'Feminino', 'Outro']"
+                    :key="opt"
+                    @click="newPatient.gender = opt"
+                    :class="[
+                      'flex-1 py-2 text-sm rounded-lg border transition-colors font-medium',
+                      newPatient.gender === opt
+                        ? 'bg-teal-600 border-teal-600 text-white'
+                        : 'border-gray-200 text-gray-600 hover:bg-gray-50',
+                    ]"
+                  >
+                    {{ opt }}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Telefone + Email -->
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">Telefone</label>
+                  <div class="relative">
+                    <Phone size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      :value="newPatient.phone"
+                      @input="onPhoneInput"
+                      type="text"
+                      placeholder="(00) 00000-0000"
+                      class="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1.5">E-mail</label>
+                  <div class="relative">
+                    <Mail size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      v-model="newPatient.email"
+                      type="email"
+                      placeholder="email@exemplo.com"
+                      class="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Endereço -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5">Endereço</label>
+                <input
+                  v-model="newPatient.address"
+                  type="text"
+                  placeholder="Rua, número, bairro, cidade"
+                  class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                />
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="flex gap-3 px-6 py-4 border-t border-gray-100">
+              <button
+                @click="closeModal"
+                class="flex-1 px-4 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                @click="savePatient"
+                :disabled="!newPatient.name"
+                :class="[
+                  'flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors',
+                  newPatient.name ? 'bg-teal-600 hover:bg-teal-700' : 'bg-teal-300 cursor-not-allowed',
+                ]"
+              >
+                Cadastrar Paciente
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.2s ease;
+}
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+}
+.modal-enter-active .relative,
+.modal-leave-active .relative {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.modal-enter-from .relative {
+  transform: scale(0.95) translateY(8px);
+  opacity: 0;
+}
+</style>
