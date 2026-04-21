@@ -1,19 +1,24 @@
 <script setup>
-import { ref, computed } from "vue";
+import { ref, computed, reactive } from "vue";
 import { Search, Phone, Mail, Eye, MoreHorizontal, Plus, X, User, CreditCard, Calendar } from "lucide-vue-next";
+import patientService from '../services/patient'
+
+const clinicId = localStorage.getItem("clinicId");
 
 const search = ref("");
 
 // --- Modal ---
 const showModal = ref(false);
-const newPatient = ref({
+
+const formPatient = reactive({
   name: "",
-  birth: "",
-  cpf: "",
-  phone: "",
   email: "",
+  cpf: "",
+  birth_date: "",
   gender: "",
+  phone: "",
   address: "",
+  clinic_id: clinicId,
 });
 
 function openModal() {
@@ -21,27 +26,36 @@ function openModal() {
 }
 function closeModal() {
   showModal.value = false;
-  newPatient.value = { name: "", birth: "", cpf: "", phone: "", email: "", gender: "", address: "" };
+  formPatient.value = { name: "", email: "", cpf: "", birth_date: "", gender: "", phone: "", address: "", clinic_id: clinicId };
 }
-function savePatient() {
-  if (!newPatient.value.name) return;
-  const initials = newPatient.value.name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join("");
-  patients.value.unshift({
-    id: Date.now(),
-    name: newPatient.value.name,
-    initials,
-    birth: newPatient.value.birth,
-    cpf: newPatient.value.cpf,
-    phone: newPatient.value.phone,
-    email: newPatient.value.email,
-    lastVisit: "—",
-  });
-  closeModal();
+// function savePatient() {
+//   if (!newPatient.value.name) return;
+//   const initials = newPatient.value.name
+//     .split(" ")
+//     .filter(Boolean)
+//     .slice(0, 2)
+//     .map((w) => w[0].toUpperCase())
+//     .join("");
+//   patients.value.unshift({
+//     id: Date.now(),
+//     name: newPatient.value.name,
+//     initials,
+//     birth: newPatient.value.birth,
+//     cpf: newPatient.value.cpf,
+//     phone: newPatient.value.phone,
+//     email: newPatient.value.email,
+//     lastVisit: "—",
+//   });
+//   closeModal();
+// }
+
+const createPatient = async () => {
+  try {
+    await patientService.createPatient(formPatient);
+    showModal.value = false;
+  } catch (error) {
+    console.log("Error creating patient:", error);
+  }
 }
 
 // CPF mask
@@ -50,7 +64,7 @@ function onCpfInput(e) {
   v = v.replace(/(\d{3})(\d)/, "$1.$2");
   v = v.replace(/(\d{3})(\d)/, "$1.$2");
   v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-  newPatient.value.cpf = v;
+  formPatient.cpf = v;
 }
 
 // Phone mask
@@ -58,12 +72,12 @@ function onPhoneInput(e) {
   let v = e.target.value.replace(/\D/g, "").slice(0, 11);
   v = v.replace(/^(\d{2})(\d)/, "($1) $2");
   v = v.replace(/(\d{5})(\d)/, "$1-$2");
-  newPatient.value.phone = v;
+  formPatient.phone = v;
 }
 
 const patients = ref([
-  { id: 1, name: "Maria Silva Santos", initials: "MS", birth: "15/03/1985", cpf: "123.456.789-00", phone: "(11) 99999-1234", email: "maria.silva@email.com", lastVisit: "28/03/2026" },
-  { id: 2, name: "Joao Pedro Costa", initials: "JP", birth: "22/07/1978", cpf: "234.567.890-11", phone: "(11) 98888-2345", email: "joao.costa@email.com", lastVisit: "25/03/2026" },
+  { id: 1, name: "Maria Silva Santos", initials: "MS", birth_date: "15/03/1985", cpf: "123.456.789-00", phone: "(11) 99999-1234", email: "maria.silva@email.com", lastVisit: "28/03/2026" },
+  { id: 2, name: "Joao Pedro Costa", initials: "JP", birth_date: "22/07/1978", cpf: "234.567.890-11", phone: "(11) 98888-2345", email: "joao.costa@email.com", lastVisit: "25/03/2026" },
   { id: 3, name: "Ana Paula Oliveira", initials: "AP", birth: "10/12/1990", cpf: "345.678.901-22", phone: "(11) 97777-3456", email: "ana.oliveira@email.com", lastVisit: "20/03/2026" },
   { id: 4, name: "Carlos Eduardo Ferreira", initials: "CE", birth: "05/09/1982", cpf: "456.789.012-33", phone: "(11) 96666-4567", email: "carlos.ferreira@email.com", lastVisit: "18/03/2026" },
   { id: 5, name: "Patricia Lima Souza", initials: "PL", birth: "30/01/1995", cpf: "567.890.123-44", phone: "(11) 95555-5678", email: "patricia.souza@email.com", lastVisit: "15/03/2026" },
@@ -136,7 +150,7 @@ const filtered = computed(() =>
                 </div>
                 <div>
                   <p class="font-medium text-gray-800">{{ patient.name }}</p>
-                  <p class="text-xs text-gray-400">Nascimento: {{ patient.birth }}</p>
+                  <p class="text-xs text-gray-400">Nascimento: {{ patient.birth_date }}</p>
                 </div>
               </div>
             </td>
@@ -201,7 +215,7 @@ const filtered = computed(() =>
                 <div class="relative">
                   <User size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
-                    v-model="newPatient.name"
+                    v-model="formPatient.name"
                     type="text"
                     placeholder="Nome completo do paciente"
                     class="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
@@ -216,7 +230,7 @@ const filtered = computed(() =>
                   <div class="relative">
                     <CreditCard size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
-                      :value="newPatient.cpf"
+                      :value="formPatient.cpf"
                       @input="onCpfInput"
                       type="text"
                       placeholder="000.000.000-00"
@@ -229,7 +243,7 @@ const filtered = computed(() =>
                   <div class="relative">
                     <Calendar size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
-                      v-model="newPatient.birth"
+                      v-model="formPatient.birth_date"
                       type="date"
                       class="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
                     />
@@ -244,10 +258,10 @@ const filtered = computed(() =>
                   <button
                     v-for="opt in ['Masculino', 'Feminino', 'Outro']"
                     :key="opt"
-                    @click="newPatient.gender = opt"
+                    @click="formPatient.gender = opt"
                     :class="[
                       'flex-1 py-2 text-sm rounded-lg border transition-colors font-medium',
-                      newPatient.gender === opt
+                      formPatient.gender === opt
                         ? 'bg-teal-600 border-teal-600 text-white'
                         : 'border-gray-200 text-gray-600 hover:bg-gray-50',
                     ]"
@@ -264,7 +278,7 @@ const filtered = computed(() =>
                   <div class="relative">
                     <Phone size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
-                      :value="newPatient.phone"
+                      :value="formPatient.phone"
                       @input="onPhoneInput"
                       type="text"
                       placeholder="(00) 00000-0000"
@@ -277,7 +291,7 @@ const filtered = computed(() =>
                   <div class="relative">
                     <Mail size="15" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
-                      v-model="newPatient.email"
+                      v-model="formPatient.email"
                       type="email"
                       placeholder="email@exemplo.com"
                       class="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
@@ -290,7 +304,7 @@ const filtered = computed(() =>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1.5">Endereço</label>
                 <input
-                  v-model="newPatient.address"
+                  v-model="formPatient.address"
                   type="text"
                   placeholder="Rua, número, bairro, cidade"
                   class="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
@@ -307,11 +321,11 @@ const filtered = computed(() =>
                 Cancelar
               </button>
               <button
-                @click="savePatient"
-                :disabled="!newPatient.name"
+                @click="createPatient"
+                :disabled="!formPatient.name"
                 :class="[
                   'flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors',
-                  newPatient.name ? 'bg-teal-600 hover:bg-teal-700' : 'bg-teal-300 cursor-not-allowed',
+                  formPatient.name ? 'bg-teal-600 hover:bg-teal-700' : 'bg-teal-300 cursor-not-allowed',
                 ]"
               >
                 Cadastrar Paciente

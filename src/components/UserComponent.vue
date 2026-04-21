@@ -139,9 +139,16 @@ const createUser = async () => {
 
 const updateUser = async () => {
   try {
-    await userService.updateUser(editForm.id, editForm);
+    const payload = { ...editForm };
+
+    if (!payload.password) {
+      delete payload.password;
+    }
+
+    await userService.updateUser(editForm.id, payload);
+
     showEditModal.value = false;
-     getUsers();
+    getUsers();
   } catch (error) {
     console.error("Error updating user:", error);
   }
