@@ -1,11 +1,12 @@
 <script setup>
-import { ref, computed, reactive } from "vue";
+import { ref, computed, reactive, onMounted } from "vue";
 import { Search, Phone, Mail, Eye, MoreHorizontal, Plus, X, User, CreditCard, Calendar } from "lucide-vue-next";
 import patientService from '../services/patient'
 
 const clinicId = localStorage.getItem("clinicId");
 
-const search = ref("");
+const search = ref("")
+const patients = ref([])
 
 // --- Modal ---
 const showModal = ref(false);
@@ -21,6 +22,10 @@ const formPatient = reactive({
   clinic_id: clinicId,
 });
 
+onMounted(() => {
+  getPatients();
+})
+
 function openModal() {
   showModal.value = true;
 }
@@ -28,26 +33,7 @@ function closeModal() {
   showModal.value = false;
   formPatient.value = { name: "", email: "", cpf: "", birth_date: "", gender: "", phone: "", address: "", clinic_id: clinicId };
 }
-// function savePatient() {
-//   if (!newPatient.value.name) return;
-//   const initials = newPatient.value.name
-//     .split(" ")
-//     .filter(Boolean)
-//     .slice(0, 2)
-//     .map((w) => w[0].toUpperCase())
-//     .join("");
-//   patients.value.unshift({
-//     id: Date.now(),
-//     name: newPatient.value.name,
-//     initials,
-//     birth: newPatient.value.birth,
-//     cpf: newPatient.value.cpf,
-//     phone: newPatient.value.phone,
-//     email: newPatient.value.email,
-//     lastVisit: "—",
-//   });
-//   closeModal();
-// }
+
 
 const createPatient = async () => {
   try {
@@ -55,6 +41,15 @@ const createPatient = async () => {
     showModal.value = false;
   } catch (error) {
     console.log("Error creating patient:", error);
+  }
+}
+
+const getPatients = async () => {
+  try {
+    const response = await patientService.getPatients(clinicId);
+    patients.value = response.data;
+  } catch (error) {
+    console.log("Error fetching patients:", error);
   }
 }
 
@@ -75,15 +70,15 @@ function onPhoneInput(e) {
   formPatient.phone = v;
 }
 
-const patients = ref([
-  { id: 1, name: "Maria Silva Santos", initials: "MS", birth_date: "15/03/1985", cpf: "123.456.789-00", phone: "(11) 99999-1234", email: "maria.silva@email.com", lastVisit: "28/03/2026" },
-  { id: 2, name: "Joao Pedro Costa", initials: "JP", birth_date: "22/07/1978", cpf: "234.567.890-11", phone: "(11) 98888-2345", email: "joao.costa@email.com", lastVisit: "25/03/2026" },
-  { id: 3, name: "Ana Paula Oliveira", initials: "AP", birth: "10/12/1990", cpf: "345.678.901-22", phone: "(11) 97777-3456", email: "ana.oliveira@email.com", lastVisit: "20/03/2026" },
-  { id: 4, name: "Carlos Eduardo Ferreira", initials: "CE", birth: "05/09/1982", cpf: "456.789.012-33", phone: "(11) 96666-4567", email: "carlos.ferreira@email.com", lastVisit: "18/03/2026" },
-  { id: 5, name: "Patricia Lima Souza", initials: "PL", birth: "30/01/1995", cpf: "567.890.123-44", phone: "(11) 95555-5678", email: "patricia.souza@email.com", lastVisit: "15/03/2026" },
-  { id: 6, name: "Roberto Almeida Junior", initials: "RA", birth: "18/06/1970", cpf: "678.901.234-55", phone: "(11) 94444-6789", email: "roberto.junior@email.com", lastVisit: "10/03/2026" },
-  { id: 7, name: "Fernanda Rodrigues", initials: "FR", birth: "25/04/1988", cpf: "789.012.345-66", phone: "(11) 93333-7890", email: "fernanda.rodrigues@email.com", lastVisit: "05/03/2026" },
-]);
+// const patients = ref([
+//   { id: 1, name: "Maria Silva Santos", initials: "MS", birth_date: "15/03/1985", cpf: "123.456.789-00", phone: "(11) 99999-1234", email: "maria.silva@email.com", lastVisit: "28/03/2026" },
+//   { id: 2, name: "Joao Pedro Costa", initials: "JP", birth_date: "22/07/1978", cpf: "234.567.890-11", phone: "(11) 98888-2345", email: "joao.costa@email.com", lastVisit: "25/03/2026" },
+//   { id: 3, name: "Ana Paula Oliveira", initials: "AP", birth: "10/12/1990", cpf: "345.678.901-22", phone: "(11) 97777-3456", email: "ana.oliveira@email.com", lastVisit: "20/03/2026" },
+//   { id: 4, name: "Carlos Eduardo Ferreira", initials: "CE", birth: "05/09/1982", cpf: "456.789.012-33", phone: "(11) 96666-4567", email: "carlos.ferreira@email.com", lastVisit: "18/03/2026" },
+//   { id: 5, name: "Patricia Lima Souza", initials: "PL", birth: "30/01/1995", cpf: "567.890.123-44", phone: "(11) 95555-5678", email: "patricia.souza@email.com", lastVisit: "15/03/2026" },
+//   { id: 6, name: "Roberto Almeida Junior", initials: "RA", birth: "18/06/1970", cpf: "678.901.234-55", phone: "(11) 94444-6789", email: "roberto.junior@email.com", lastVisit: "10/03/2026" },
+//   { id: 7, name: "Fernanda Rodrigues", initials: "FR", birth: "25/04/1988", cpf: "789.012.345-66", phone: "(11) 93333-7890", email: "fernanda.rodrigues@email.com", lastVisit: "05/03/2026" },
+// ]);
 
 const filtered = computed(() =>
   patients.value.filter(

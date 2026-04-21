@@ -9,6 +9,16 @@ async function createPatient(patientData) {
     }
 }
 
+async function getPatients(clinicId) {
+    try {
+        const response = await api.get(`patient/clinic/${clinicId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching patients:', error);
+    }
+}
+
 export default {
-    createPatient
+    createPatient,
+    getPatients
 }
