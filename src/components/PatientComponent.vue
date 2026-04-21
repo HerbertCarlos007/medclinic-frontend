@@ -29,9 +29,18 @@ onMounted(() => {
 function openModal() {
   showModal.value = true;
 }
+
 function closeModal() {
   showModal.value = false;
-  formPatient.value = { name: "", email: "", cpf: "", birth_date: "", gender: "", phone: "", address: "", clinic_id: clinicId };
+
+  formPatient.name = "";
+  formPatient.email = "";
+  formPatient.cpf = "";
+  formPatient.birth_date = "";
+  formPatient.gender = "";
+  formPatient.phone = "";
+  formPatient.address = "";
+  formPatient.clinic_id = clinicId;
 }
 
 
@@ -39,6 +48,7 @@ const createPatient = async () => {
   try {
     await patientService.createPatient(formPatient);
     showModal.value = false;
+    getPatients();
   } catch (error) {
     console.log("Error creating patient:", error);
   }
@@ -317,7 +327,7 @@ const filtered = computed(() =>
               </button>
               <button
                 @click="createPatient"
-                :disabled="!formPatient.name"
+                :disabled="!formPatient"
                 :class="[
                   'flex-1 px-4 py-2.5 rounded-lg text-sm font-medium text-white transition-colors',
                   formPatient.name ? 'bg-teal-600 hover:bg-teal-700' : 'bg-teal-300 cursor-not-allowed',
