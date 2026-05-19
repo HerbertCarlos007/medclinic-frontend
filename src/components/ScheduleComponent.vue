@@ -11,6 +11,7 @@ import {
 } from "lucide-vue-next";
 import appointmentService from "../services/appointment";
 import doctorService from "../services/doctor";
+import patientService from "../services/patient";
 
 const clinicId = localStorage.getItem("clinicId");
 
@@ -19,9 +20,8 @@ const showModal = ref(false);
 const newAppointment = ref({
   patient_id: "",
   doctor_id: "",
-  date: "",
   scheduled_at: "",
-  duration: "30",
+  duration: 30,
   status: "scheduled",
   clinic_id: clinicId,
 });
@@ -30,16 +30,17 @@ const bookedTimes = ref([]);
 const selectedTime = ref("");
 
 const fullDateTime = computed(() => {
-  if (!newAppointment.value.scheduled_at || !newAppointment.value.time)
-    return null;
+  if (!newAppointment.value.scheduled_at || !selectedTime.value) return null;
 
-  return `${newAppointment.value.scheduled_at} ${newAppointment.value.time}:00`;
+  return `${newAppointment.value.scheduled_at} ${selectedTime.value}:00`;
 });
 
 const doctors = ref([]);
+const patients = ref([]);
 
 onMounted(() => {
   getDoctors();
+  getPatients();
 });
 
 watch(
@@ -77,18 +78,37 @@ const appointmentTypes = ["Consulta", "Retorno", "Exame", "Primeira Consulta"];
 function openModal() {
   showModal.value = true;
 }
+
 function closeModal() {
   showModal.value = false;
+
   newAppointment.value = {
     patient_id: "",
     doctor_id: "",
-    date: "",
     scheduled_at: "",
-    duration: "30",
+    duration: 30,
     status: "scheduled",
     clinic_id: clinicId,
   };
+
+  selectedTime.value = "";
 }
+
+const minDate = computed(() => {
+  const now = new Date();
+
+  const min = new Date(now);
+
+  if (now.getHours() >= 17) {
+    min.setDate(min.getDate() + 1);
+  }
+
+  const year = min.getFullYear();
+  const month = String(min.getMonth() + 1).padStart(2, "0");
+  const day = String(min.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+});
 
 // function scheduleAppointment() {
 //   const payload = {
@@ -98,6 +118,15 @@ function closeModal() {
 
 //   console.log("Consulta agendada:", payload)
 // }
+
+const scheduleAppointment = async () => {
+  const payload = {
+    ...newAppointment.value,
+    scheduled_at: fullDateTime.value,
+  };
+
+  await appointmentService.createAppointment(payload);
+};
 
 const getAppointmentsByDoctor = async () => {
   try {
@@ -112,6 +141,15 @@ const getAppointmentsByDoctor = async () => {
     });
   } catch (error) {
     console.log("Error fetching appointments:", error);
+  }
+};
+
+const getPatients = async () => {
+  try {
+    const response = await patientService.getPatients(clinicId);
+    patients.value = response.data;
+  } catch (error) {
+    console.log("Error fetching patients:", error);
   }
 };
 
@@ -586,18 +624,22 @@ const shortDayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
                 <label class="block text-sm font-medium text-gray-700 mb-1.5"
                   >Paciente</label
                 >
-                <div class="relative">
-                  <User
-                    size="15"
-                    class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  />
-                  <input
-                    v-model="newAppointment.patient"
-                    type="text"
-                    placeholder="Nome do paciente"
-                    class="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
-                  />
-                </div>
+                <select
+                  v-model="newAppointment.patient_id"
+                  class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition appearance-none bg-white"
+                >
+                  <option value="" disabled selected>
+                    Selecione um paciente
+                  </option>
+
+                  <option
+                    v-for="patient in patients"
+                    :key="patient.id"
+                    :value="patient.id"
+                  >
+                    {{ patient.name }}
+                  </option>
+                </select>
               </div>
 
               <!-- Médico -->
@@ -609,6 +651,10 @@ const shortDayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
                   v-model="newAppointment.doctor_id"
                   class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition appearance-none bg-white"
                 >
+                  <option value="" disabled selected>
+                    Selecione um médico
+                  </option>
+
                   <option
                     v-for="doctor in doctors"
                     :key="doctor.id"
@@ -628,6 +674,7 @@ const shortDayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
                   <input
                     v-model="newAppointment.scheduled_at"
                     type="date"
+                    :min="minDate"
                     class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
                   />
                 </div>
@@ -639,6 +686,9 @@ const shortDayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
                     v-model="selectedTime"
                     class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition appearance-none bg-white"
                   >
+                    <option value="" disabled selected>
+                      Selecione um horário
+                    </option>
                     <option v-for="t in availableSlots" :key="t" :value="t">
                       {{ t }}
                     </option>
@@ -655,6 +705,9 @@ const shortDayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
                   v-model="newAppointment.type"
                   class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition appearance-none bg-white"
                 >
+                  <option value="" disabled selected>
+                    Selecione um tipo
+                  </option>
                   <option v-for="t in appointmentTypes" :key="t" :value="t">
                     {{ t }}
                   </option>

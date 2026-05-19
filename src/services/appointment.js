@@ -14,6 +14,16 @@ async function getAppointmentsByDoctor(doctorId, date) {
     }
 }
 
+async function createAppointment(appointmentData) {
+    try {
+        const response = await api.post('appointment', appointmentData);
+        return response.data;
+    } catch (error) {
+        console.error('Appointment creation error:', error);
+    }
+}
+
 export default {
-    getAppointmentsByDoctor
+    getAppointmentsByDoctor,
+    createAppointment
 }
