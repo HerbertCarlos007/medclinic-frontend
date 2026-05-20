@@ -14,6 +14,16 @@ async function getAppointmentsByDoctor(doctorId, date) {
     }
 }
 
+async function getAllAppointments(clinicId) {
+    try {
+        const response = await api.get(`appointment/clinic/${clinicId}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching appointments:', error);
+    }
+}
+
+
 async function createAppointment(appointmentData) {
     try {
         const response = await api.post('appointment', appointmentData);
@@ -25,5 +35,6 @@ async function createAppointment(appointmentData) {
 
 export default {
     getAppointmentsByDoctor,
-    createAppointment
+    createAppointment,
+    getAllAppointments
 }

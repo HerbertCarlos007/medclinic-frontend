@@ -22,6 +22,8 @@ const newAppointment = ref({
   doctor_id: "",
   scheduled_at: "",
   duration: 30,
+  notes: "",
+  type: "",
   status: "scheduled",
   clinic_id: clinicId,
 });
@@ -37,10 +39,12 @@ const fullDateTime = computed(() => {
 
 const doctors = ref([]);
 const patients = ref([]);
+const allAppointments = ref([]);
 
 onMounted(() => {
   getDoctors();
   getPatients();
+  getAllAppointments();
 });
 
 watch(
@@ -87,6 +91,8 @@ function closeModal() {
     doctor_id: "",
     scheduled_at: "",
     duration: 30,
+    notes: "",
+    type: "",
     status: "scheduled",
     clinic_id: clinicId,
   };
@@ -110,14 +116,7 @@ const minDate = computed(() => {
   return `${year}-${month}-${day}`;
 });
 
-// function scheduleAppointment() {
-//   const payload = {
-//     ...newAppointment.value,
-//     scheduled_at: fullDateTime.value
-//   }
 
-//   console.log("Consulta agendada:", payload)
-// }
 
 const scheduleAppointment = async () => {
   const payload = {
@@ -127,6 +126,8 @@ const scheduleAppointment = async () => {
 
   await appointmentService.createAppointment(payload);
 };
+
+
 
 const getAppointmentsByDoctor = async () => {
   try {
@@ -139,6 +140,15 @@ const getAppointmentsByDoctor = async () => {
       const date = new Date(a.scheduled_at);
       return date.toTimeString().slice(0, 5); // "08:30"
     });
+  } catch (error) {
+    console.log("Error fetching appointments:", error);
+  }
+};
+
+const getAllAppointments = async () => {
+  try {
+    const response = await appointmentService.getAllAppointments(clinicId);
+    allAppointments.value = response.data;
   } catch (error) {
     console.log("Error fetching appointments:", error);
   }
@@ -239,73 +249,73 @@ const selectedLabel = computed(() => {
   return `${wd}, ${d.getDate()} de ${monthNames[d.getMonth()].toLowerCase()}`;
 });
 
-// --- Appointments ---
-const allAppointments = [
-  {
-    time: "08:00",
-    patient: "Maria Silva",
-    doctor: "Dr. Carlos Mendes",
-    duration: "30min",
-    type: "Consulta",
-  },
-  {
-    time: "08:30",
-    patient: "Joao Santos",
-    doctor: "Dra. Ana Paula",
-    duration: "20min",
-    type: "Retorno",
-  },
-  {
-    time: "09:00",
-    patient: "Pedro Costa",
-    doctor: "Dr. Carlos Mendes",
-    duration: "45min",
-    type: "Exame",
-  },
-  { time: "09:30", patient: null, doctor: null, duration: null, type: null },
-  {
-    time: "10:00",
-    patient: "Ana Oliveira",
-    doctor: "Dra. Julia Lima",
-    duration: "30min",
-    type: "Consulta",
-  },
-  {
-    time: "10:30",
-    patient: "Lucas Ferreira",
-    doctor: "Dr. Carlos Mendes",
-    duration: "45min",
-    type: "Primeira Consulta",
-  },
-  {
-    time: "11:00",
-    patient: "Carla Rodrigues",
-    doctor: "Dra. Ana Paula",
-    duration: "20min",
-    type: "Retorno",
-  },
-  { time: "11:30", patient: null, doctor: null, duration: null, type: null },
-  { time: "12:00", patient: null, doctor: null, duration: null, type: null },
-  {
-    time: "14:00",
-    patient: "Roberto Lima",
-    doctor: "Dr. Carlos Mendes",
-    duration: "30min",
-    type: "Consulta",
-  },
-  {
-    time: "14:30",
-    patient: "Patricia Souza",
-    doctor: "Dra. Julia Lima",
-    duration: "45min",
-    type: "Primeira Consulta",
-  },
-  { time: "15:00", patient: null, doctor: null, duration: null, type: null },
-];
+// // --- Appointments ---
+// const allAppointments = [
+//   {
+//     time: "08:00",
+//     patient: "Maria Silva",
+//     doctor: "Dr. Carlos Mendes",
+//     duration: "30min",
+//     type: "Consulta",
+//   },
+//   {
+//     time: "08:30",
+//     patient: "Joao Santos",
+//     doctor: "Dra. Ana Paula",
+//     duration: "20min",
+//     type: "Retorno",
+//   },
+//   {
+//     time: "09:00",
+//     patient: "Pedro Costa",
+//     doctor: "Dr. Carlos Mendes",
+//     duration: "45min",
+//     type: "Exame",
+//   },
+//   { time: "09:30", patient: null, doctor: null, duration: null, type: null },
+//   {
+//     time: "10:00",
+//     patient: "Ana Oliveira",
+//     doctor: "Dra. Julia Lima",
+//     duration: "30min",
+//     type: "Consulta",
+//   },
+//   {
+//     time: "10:30",
+//     patient: "Lucas Ferreira",
+//     doctor: "Dr. Carlos Mendes",
+//     duration: "45min",
+//     type: "Primeira Consulta",
+//   },
+//   {
+//     time: "11:00",
+//     patient: "Carla Rodrigues",
+//     doctor: "Dra. Ana Paula",
+//     duration: "20min",
+//     type: "Retorno",
+//   },
+//   { time: "11:30", patient: null, doctor: null, duration: null, type: null },
+//   { time: "12:00", patient: null, doctor: null, duration: null, type: null },
+//   {
+//     time: "14:00",
+//     patient: "Roberto Lima",
+//     doctor: "Dr. Carlos Mendes",
+//     duration: "30min",
+//     type: "Consulta",
+//   },
+//   {
+//     time: "14:30",
+//     patient: "Patricia Souza",
+//     doctor: "Dra. Julia Lima",
+//     duration: "45min",
+//     type: "Primeira Consulta",
+//   },
+//   { time: "15:00", patient: null, doctor: null, duration: null, type: null },
+// ];
 
-const bookedCount = computed(
-  () => allAppointments.filter((a) => a.patient).length,
-);
+const bookedCount = computed(() => {
+  return allAppointments.value.filter((a) => a.patient).length;
+});
 
 const typeStyle = (type) => {
   if (type === "Consulta")
@@ -470,7 +480,7 @@ const shortDayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
             class="flex items-start gap-4 px-6 py-3 hover:bg-gray-50 transition-colors"
           >
             <span class="text-sm text-gray-400 w-12 shrink-0 pt-1">{{
-              slot.time
+              slot.scheduled_at.slice(11, 16)
             }}</span>
             <div
               v-if="!slot.patient"
@@ -484,12 +494,12 @@ const shortDayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
             >
               <div>
                 <p class="font-semibold text-gray-800 text-sm">
-                  {{ slot.patient }}
+                  {{ slot.patient.name }}
                 </p>
                 <div class="flex items-center gap-3 mt-1">
                   <span class="flex items-center gap-1 text-xs text-gray-500">
                     <Stethoscope size="11" class="text-gray-400" />
-                    {{ slot.doctor }}
+                    {{ slot.doctor.name }}
                   </span>
                   <span class="flex items-center gap-1 text-xs text-gray-500">
                     <Clock size="11" class="text-gray-400" />
@@ -712,6 +722,14 @@ const shortDayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
                     {{ t }}
                   </option>
                 </select>
+              </div>
+
+               <!-- Observações -->
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1.5"
+                  >Observações</label
+                >
+              <input type="text" v-model="newAppointment.notes" placeholder="Ex: Paciente tem alergia a penicilina" class="w-full px-3 py-10 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition" />
               </div>
             </div>
 
