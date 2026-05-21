@@ -7,7 +7,7 @@ import {
   FileText,
   Stethoscope,
   DollarSign,
-  User
+  User,
 } from "lucide-vue-next";
 
 const router = useRouter();
@@ -18,21 +18,26 @@ const isActive = (path) => route.path === path;
 const menuItems = [
   { label: "Dashboard", icon: LayoutGrid, path: "/dashboard" },
   { label: "Agenda", icon: Calendar, path: "/schedule" },
+  { label: "Atendimento", icon: Calendar, path: "/appointments" },
   { label: "Pacientes", icon: Users, path: "/patient" },
   { label: "Prontuário", icon: FileText, path: "/medical-record" },
   { label: "Médicos", icon: Stethoscope, path: "/doctor" },
   { label: "Financeiro", icon: DollarSign, path: "/transactions" },
   { label: "Usuarios", icon: User, path: "/user" },
-   { label: "Clinicas", icon: User, path: "/clinic" },
+  { label: "Clinicas", icon: User, path: "/clinic" },
 ];
 </script>
 
 <template>
-  <div class="w-56 min-h-screen bg-white flex flex-col justify-between border-r border-gray-200 py-6 px-3">
+  <div
+    class="w-56 min-h-screen bg-white flex flex-col justify-between border-r border-gray-200 py-6 px-3"
+  >
     <!-- Logo -->
     <div>
       <div class="flex items-center gap-3 px-2 mb-8">
-        <div class="w-9 h-9 rounded-xl bg-teal-600 flex items-center justify-center shrink-0">
+        <div
+          class="w-9 h-9 rounded-xl bg-teal-600 flex items-center justify-center shrink-0"
+        >
           <Stethoscope size="18" class="text-white" />
         </div>
         <div class="leading-tight">
@@ -67,7 +72,9 @@ const menuItems = [
     <!-- Footer -->
     <div class="px-2">
       <div class="flex items-center gap-3">
-        <div class="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center shrink-0">
+        <div
+          class="w-8 h-8 rounded-full bg-teal-600 flex items-center justify-center shrink-0"
+        >
           <span class="text-white text-xs font-bold">MC</span>
         </div>
         <div class="leading-tight">

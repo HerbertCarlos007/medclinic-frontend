@@ -14,9 +14,14 @@ async function getAppointmentsByDoctor(doctorId, date) {
     }
 }
 
-async function getAllAppointments(clinicId) {
+async function getAllAppointments(clinicId, date) {
     try {
-        const response = await api.get(`appointment/clinic/${clinicId}`);
+        const response = await api.get(`appointment/clinic/${clinicId}`, {
+            params: {
+                date: date
+            }
+        });
+
         return response.data;
     } catch (error) {
         console.error('Error fetching appointments:', error);
@@ -33,8 +38,18 @@ async function createAppointment(appointmentData) {
     }
 }
 
+async function getDoctorTodayAppointments(clinicId) {
+    try {
+        const response = await api.get(`appointment/${clinicId}/today`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching appointments:', error);
+    }
+}
+
 export default {
     getAppointmentsByDoctor,
     createAppointment,
-    getAllAppointments
+    getAllAppointments,
+    getDoctorTodayAppointments
 }

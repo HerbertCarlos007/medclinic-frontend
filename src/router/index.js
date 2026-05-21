@@ -6,6 +6,7 @@ import UserComponent from '../components/UserComponent.vue'
 import MedicalRecordComponent from '../components/MedicalRecordComponent.vue'
 import ScheduleComponent from '../components/ScheduleComponent.vue'
 import ClinicComponent from '../components/ClinicComponent.vue'
+import AppointmentsComponent from '../components/AppointmentsComponent.vue'
 
 const routes = [
     {
@@ -17,6 +18,12 @@ const routes = [
         path: '/login',
         name: 'login',
         component: LoginComponent
+    },
+
+      {
+        path: '/appointments',
+        name: 'appointments',
+        component: AppointmentsComponent
     },
 
     {

@@ -41,6 +41,12 @@ const doctors = ref([]);
 const patients = ref([]);
 const allAppointments = ref([]);
 
+const today = new Date();
+const selectedDate = ref(new Date());
+const currentMonth = ref(
+  new Date(today.getFullYear(), today.getMonth(), 1)
+);
+
 onMounted(() => {
   getDoctors();
   getPatients();
@@ -55,6 +61,11 @@ watch(
     await getAppointmentsByDoctor();
   },
 );
+
+watch(selectedDate, async () => {
+  await getAllAppointments();
+});
+
 // const doctors = ["Dr. Carlos Mendes", "Dra. Ana Paula", "Dra. Julia Lima"];
 const timeSlots = [
   "08:00",
@@ -116,8 +127,6 @@ const minDate = computed(() => {
   return `${year}-${month}-${day}`;
 });
 
-
-
 const scheduleAppointment = async () => {
   const payload = {
     ...newAppointment.value,
@@ -125,9 +134,8 @@ const scheduleAppointment = async () => {
   };
 
   await appointmentService.createAppointment(payload);
+  closeModal();
 };
-
-
 
 const getAppointmentsByDoctor = async () => {
   try {
@@ -147,7 +155,11 @@ const getAppointmentsByDoctor = async () => {
 
 const getAllAppointments = async () => {
   try {
-    const response = await appointmentService.getAllAppointments(clinicId);
+    const response = await appointmentService.getAllAppointments(
+      clinicId,
+      formattedSelectedDate.value,
+    );
+
     allAppointments.value = response.data;
   } catch (error) {
     console.log("Error fetching appointments:", error);
@@ -177,9 +189,7 @@ const getDoctors = async () => {
 };
 
 // --- Calendar logic ---
-const today = new Date(2026, 2, 30);
-const selectedDate = ref(new Date(2026, 2, 30));
-const currentMonth = ref(new Date(2026, 2, 1));
+
 const viewMode = ref("dia");
 
 const monthNames = [
@@ -249,6 +259,15 @@ const selectedLabel = computed(() => {
   return `${wd}, ${d.getDate()} de ${monthNames[d.getMonth()].toLowerCase()}`;
 });
 
+const formattedSelectedDate = computed(() => {
+  const d = selectedDate.value;
+
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+    2,
+    "0",
+  )}-${String(d.getDate()).padStart(2, "0")}`;
+});
+
 // // --- Appointments ---
 // const allAppointments = [
 //   {
@@ -314,6 +333,10 @@ const selectedLabel = computed(() => {
 // ];
 
 const bookedCount = computed(() => {
+  if (!Array.isArray(allAppointments.value)) {
+    return 0;
+  }
+
   return allAppointments.value.filter((a) => a.patient).length;
 });
 
@@ -480,7 +503,7 @@ const shortDayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
             class="flex items-start gap-4 px-6 py-3 hover:bg-gray-50 transition-colors"
           >
             <span class="text-sm text-gray-400 w-12 shrink-0 pt-1">{{
-              slot.scheduled_at.slice(11, 16)
+              slot.scheduled_at?.slice(11, 16)
             }}</span>
             <div
               v-if="!slot.patient"
@@ -494,26 +517,26 @@ const shortDayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
             >
               <div>
                 <p class="font-semibold text-gray-800 text-sm">
-                  {{ slot.patient.name }}
+                  {{ slot?.patient.name }}
                 </p>
                 <div class="flex items-center gap-3 mt-1">
                   <span class="flex items-center gap-1 text-xs text-gray-500">
                     <Stethoscope size="11" class="text-gray-400" />
-                    {{ slot.doctor.name }}
+                    {{ slot?.doctor.name }}
                   </span>
                   <span class="flex items-center gap-1 text-xs text-gray-500">
                     <Clock size="11" class="text-gray-400" />
-                    {{ slot.duration }}
+                    {{ slot?.duration }}
                   </span>
                 </div>
               </div>
               <span
                 :class="[
                   'text-xs font-medium px-2.5 py-1 rounded-full shrink-0',
-                  typeStyle(slot.type),
+                  typeStyle(slot?.type),
                 ]"
               >
-                {{ slot.type }}
+                {{ slot?.type }}
               </span>
             </div>
           </div>
@@ -539,6 +562,7 @@ const shortDayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
                   <div
                     :class="[
                       'w-7 h-7 rounded-full flex items-center justify-center mx-auto mt-1 text-sm font-semibold',
+                      selectedDate.value &&
                       wd.toDateString() === selectedDate.value.toDateString()
                         ? 'bg-teal-600 text-white'
                         : wd.toDateString() === today.toDateString()
@@ -715,21 +739,24 @@ const shortDayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
                   v-model="newAppointment.type"
                   class="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition appearance-none bg-white"
                 >
-                  <option value="" disabled selected>
-                    Selecione um tipo
-                  </option>
+                  <option value="" disabled selected>Selecione um tipo</option>
                   <option v-for="t in appointmentTypes" :key="t" :value="t">
                     {{ t }}
                   </option>
                 </select>
               </div>
 
-               <!-- Observações -->
+              <!-- Observações -->
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1.5"
                   >Observações</label
                 >
-              <input type="text" v-model="newAppointment.notes" placeholder="Ex: Paciente tem alergia a penicilina" class="w-full px-3 py-10 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition" />
+                <input
+                  type="text"
+                  v-model="newAppointment.notes"
+                  placeholder="Ex: Paciente tem alergia a penicilina"
+                  class="w-full px-3 py-10 border border-gray-200 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent transition"
+                />
               </div>
             </div>
 
