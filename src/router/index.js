@@ -7,6 +7,7 @@ import MedicalRecordComponent from '../components/MedicalRecordComponent.vue'
 import ScheduleComponent from '../components/ScheduleComponent.vue'
 import ClinicComponent from '../components/ClinicComponent.vue'
 import AppointmentsComponent from '../components/AppointmentsComponent.vue'
+import ConsultationComponent from '../components/ConsultationComponent.vue'
 
 const routes = [
     {
@@ -24,6 +25,12 @@ const routes = [
         path: '/appointments',
         name: 'appointments',
         component: AppointmentsComponent
+    },
+
+       {
+        path: '/consultation/:id',
+        name: 'consultation',
+        component: ConsultationComponent
     },
 
     {

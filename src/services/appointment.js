@@ -2,7 +2,7 @@ import api from "./api";
 
 async function getAppointmentsByDoctor(doctorId, date) {
     try {
-        const response = await api.get(`appointment/${doctorId}`, {
+        const response = await api.get(`appointment/doctor/${doctorId}`, {
             params: {
                 date: date
             }
@@ -47,9 +47,19 @@ async function getDoctorTodayAppointments(clinicId) {
     }
 }
 
+async function getAppointmentById(appointmentId) {
+    try {
+        const response = await api.get(`appointment/${appointmentId}`);         
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching appointment:', error);
+    }
+}
+
 export default {
     getAppointmentsByDoctor,
     createAppointment,
     getAllAppointments,
-    getDoctorTodayAppointments
+    getDoctorTodayAppointments,
+    getAppointmentById
 }

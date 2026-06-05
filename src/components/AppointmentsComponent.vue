@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import appointmentService from '../services/appointment'
 
+const router = useRouter()
 const clinicId = localStorage.getItem("clinicId");
 
 const todayAppointmentsByDoctor = ref([])
@@ -12,11 +14,9 @@ onMounted(() => {
 
 const searchQuery = ref('')
 
-
 const getDoctorTodayAppointments = async () => {
   try {
     const response = await appointmentService.getDoctorTodayAppointments(clinicId);
-
     todayAppointmentsByDoctor.value = response.data;
   } catch (error) {
     console.log("Error fetching appointments:", error);
@@ -31,13 +31,6 @@ const formattedDate = computed(() => {
     year: 'numeric',
   })
 })
-
-// const waitingPatients = ref([
-//   { id: 1, name: 'Maria Silva Santos', age: 41, type: 'Retorno', time: '08:00', status: 'waiting' },
-//   { id: 2, name: 'Joao Pedro Oliveira', age: 35, type: 'Consulta', time: '08:30', status: 'waiting' },
-//   { id: 3, name: 'Ana Carolina Souza', age: 28, type: 'Primeira Consulta', time: '09:00', status: 'waiting' },
-//   { id: 4, name: 'Fernanda Costa', age: 45, type: 'Consulta', time: '10:00', status: 'waiting' },
-// ])
 
 const attendedPatients = ref([
   { id: 5, name: 'Roberto Carlos Lima', age: 52, type: 'Atendido', time: '09:30', status: 'attended' },
@@ -66,15 +59,10 @@ const tagClass = (type) => {
   return map[type] ?? 'bg-gray-100 text-gray-500'
 }
 
-
-
-const selectPatient = (patient) => {
-  console.log('Paciente selecionado:', patient)
-  // Navegue para a tela de atendimento aqui
-  // ex: router.push({ name: 'consulta', params: { id: patient.id } })
+const selectPatient = (appointment) => {
+  router.push({ name: 'consultation', params: { id: appointment.id } })
 }
 </script>
-
 
 <template>
   <div class="min-h-screen bg-gray-50 font-sans">
@@ -166,10 +154,10 @@ const selectPatient = (patient) => {
 
           <div class="divide-y divide-gray-100">
             <div
-              v-for="patient in filteredWaiting"
-              :key="patient.id"
+              v-for="appointment in filteredWaiting"
+              :key="appointment.id"
               class="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50 transition group"
-              @click="selectPatient(patient)"
+              @click="selectPatient(appointment)"
             >
               <div class="flex items-center gap-3">
                 <div class="w-9 h-9 rounded-full bg-blue-50 flex items-center justify-center flex-shrink-0">
@@ -179,11 +167,11 @@ const selectPatient = (patient) => {
                   </svg>
                 </div>
                 <div>
-                  <p class="text-sm font-medium text-gray-800">{{ patient.patient.name }}</p>
+                  <p class="text-sm font-medium text-gray-800">{{ appointment.patient.name }}</p>
                   <div class="flex items-center gap-2 mt-0.5">
-                    <span class="text-xs text-gray-400">{{ patient.patient.age }}</span>
-                    <span :class="tagClass(patient.type)" class="text-xs px-2 py-0.5 rounded-full font-medium">
-                      {{ patient.type }}
+                    <span class="text-xs text-gray-400">{{ appointment.patient.age }}</span>
+                    <span :class="tagClass(appointment.type)" class="text-xs px-2 py-0.5 rounded-full font-medium">
+                      {{ appointment.type }}
                     </span>
                   </div>
                 </div>
@@ -193,7 +181,7 @@ const selectPatient = (patient) => {
                   <circle cx="12" cy="12" r="10" />
                   <path d="M12 6v6l4 2" />
                 </svg>
-                <span class="text-sm text-gray-500">{{ patient.scheduled_at.slice(11, 16) }}</span>
+                <span class="text-sm text-gray-500">{{ appointment.scheduled_at.slice(11, 16) }}</span>
                 <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path d="m9 18 6-6-6-6" />
                 </svg>
@@ -261,4 +249,3 @@ const selectPatient = (patient) => {
     </main>
   </div>
 </template>
-
