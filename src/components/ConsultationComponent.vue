@@ -239,9 +239,9 @@ const getAppointmentById = async () => {
             <span class="text-sm font-semibold text-gray-800">Medicamentos em Uso</span>
           </div>
           <div class="flex flex-col gap-3">
-            <div v-for="med in patient.medications" :key="med.name">
-              <p class="text-sm font-medium text-gray-800">{{ med.name }}</p>
-              <p class="text-xs text-teal-600">{{ med.dosage }}</p>
+            <div v-for="medication in patient.medications" :key="medication.name">
+              <p class="text-sm font-medium text-gray-800">{{ medication.name }}</p>
+              <p class="text-xs text-teal-600">{{ medication.dosage }}</p>
             </div>
           </div>
         </div>
