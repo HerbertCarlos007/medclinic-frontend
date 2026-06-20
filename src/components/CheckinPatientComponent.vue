@@ -87,6 +87,16 @@ const getAppointmentById = async () => {
   }
 };
 
+const updateStatusToWaiting = async () => {
+  try {
+    await appointmentService.updateStatus(appointmentId, {
+      status: "waiting"
+    });
+  } catch (error) {
+    console.error("Error updating appointment status:", error);
+  }
+};
+
 function remarcar() {
   router.push(`/agenda/remarcar/${appointment.value.id}`);
 }
@@ -357,7 +367,7 @@ onMounted(() => {
         </button>
 
         <button
-          @click="confirmarChegada"
+          @click="updateStatusToWaiting"
           :disabled="loading"
           class="bg-teal-600 hover:bg-teal-700 disabled:opacity-60 disabled:cursor-not-allowed text-white text-sm font-semibold px-6 py-2.5 rounded-xl transition flex items-center gap-1.5"
         >

@@ -56,10 +56,23 @@ async function getAppointmentById(appointmentId, clinicId) {
     }
 }
 
+async function updateStatus(appointmentId, data) {
+  try {
+    const response = await api.put(
+      `appointment/${appointmentId}/status`,
+      data
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('Error updating appointment status:', error);
+  }
+}
 export default {
     getAppointmentsByDoctor,
     createAppointment,
     getAllAppointments,
     getDoctorTodayAppointments,
-    getAppointmentById
+    getAppointmentById,
+    updateStatus
 }
