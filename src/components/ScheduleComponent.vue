@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from "vue";
+import { useRouter } from "vue-router";
 import {
   ChevronLeft,
   ChevronRight,
@@ -14,6 +15,8 @@ import doctorService from "../services/doctor";
 import patientService from "../services/patient";
 
 const clinicId = localStorage.getItem("clinicId");
+
+const router = useRouter()
 
 // --- Modal ---
 const showModal = ref(false);
@@ -268,6 +271,10 @@ const formattedSelectedDate = computed(() => {
   )}-${String(d.getDate()).padStart(2, "0")}`;
 });
 
+const selectAppointment = (appointment) => {
+  router.push({ name: 'checkin', params: { id: appointment.id } })
+}
+
 // // --- Appointments ---
 // const allAppointments = [
 //   {
@@ -498,6 +505,7 @@ const shortDayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
         <!-- DAY VIEW -->
         <div v-if="viewMode === 'dia'" class="divide-y divide-gray-100">
           <div
+            
             v-for="(slot, i) in allAppointments"
             :key="i"
             class="flex items-start gap-4 px-6 py-3 hover:bg-gray-50 transition-colors"
@@ -513,6 +521,7 @@ const shortDayNames = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sab", "Dom"];
             </div>
             <div
               v-else
+             @click="selectAppointment(slot)"
               class="flex-1 bg-teal-50 border-l-4 border-teal-500 rounded-lg px-4 py-2.5 flex items-center justify-between"
             >
               <div>

@@ -8,6 +8,7 @@ import ScheduleComponent from '../components/ScheduleComponent.vue'
 import ClinicComponent from '../components/ClinicComponent.vue'
 import AppointmentsComponent from '../components/AppointmentsComponent.vue'
 import ConsultationComponent from '../components/ConsultationComponent.vue'
+import CheckinPatientComponent from '../components/CheckinPatientComponent.vue'
 
 const routes = [
     {
@@ -67,6 +68,12 @@ const routes = [
         path: '/clinic',
         name: 'clinic',
         component: ClinicComponent
+    },
+
+    {
+        path: '/checkin/:id',
+        name: 'checkin',
+        component: CheckinPatientComponent
     },
     
 

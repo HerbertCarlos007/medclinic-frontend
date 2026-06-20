@@ -47,9 +47,9 @@ async function getDoctorTodayAppointments(clinicId) {
     }
 }
 
-async function getAppointmentById(appointmentId) {
+async function getAppointmentById(appointmentId, clinicId) {
     try {
-        const response = await api.get(`appointment/${appointmentId}`);         
+        const response = await api.get(`appointment/${appointmentId}/clinic/${clinicId}`);         
         return response.data;
     } catch (error) {
         console.error('Error fetching appointment:', error);
