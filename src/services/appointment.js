@@ -47,9 +47,18 @@ async function getDoctorTodayAppointments(clinicId) {
     }
 }
 
+async function getDoctorTodayCompletedAppointments(clinicId) {
+    try {
+        const response = await api.get(`appointment/${clinicId}/today/completed`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching completed appointments:', error);
+    }
+}
+
 async function getAppointmentById(appointmentId, clinicId) {
     try {
-        const response = await api.get(`appointment/${appointmentId}/clinic/${clinicId}`);         
+        const response = await api.get(`appointment/${appointmentId}/clinic/${clinicId}`);
         return response.data;
     } catch (error) {
         console.error('Error fetching appointment:', error);
@@ -57,16 +66,16 @@ async function getAppointmentById(appointmentId, clinicId) {
 }
 
 async function updateStatus(appointmentId, data) {
-  try {
-    const response = await api.put(
-      `appointment/${appointmentId}/status`,
-      data
-    );
+    try {
+        const response = await api.put(
+            `appointment/${appointmentId}/status`,
+            data
+        );
 
-    return response.data;
-  } catch (error) {
-    console.error('Error updating appointment status:', error);
-  }
+        return response.data;
+    } catch (error) {
+        console.error('Error updating appointment status:', error);
+    }
 }
 export default {
     getAppointmentsByDoctor,
@@ -74,5 +83,6 @@ export default {
     getAllAppointments,
     getDoctorTodayAppointments,
     getAppointmentById,
-    updateStatus
+    updateStatus,
+    getDoctorTodayCompletedAppointments
 }

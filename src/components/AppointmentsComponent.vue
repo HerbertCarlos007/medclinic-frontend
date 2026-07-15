@@ -7,9 +7,11 @@ const router = useRouter()
 const clinicId = localStorage.getItem("clinicId");
 
 const todayAppointmentsByDoctor = ref([])
+const todayCompletedAppointmentsByDoctor = ref([])
 
 onMounted(() => {
   getDoctorTodayAppointments();
+  getDoctorTodayCompletedAppointments();
 })
 
 const searchQuery = ref('')
@@ -23,6 +25,15 @@ const getDoctorTodayAppointments = async () => {
   }
 };
 
+const getDoctorTodayCompletedAppointments = async () => {
+  try {
+    const response = await appointmentService.getDoctorTodayCompletedAppointments(clinicId);
+    todayCompletedAppointmentsByDoctor.value = response.data;
+  } catch (error) {
+    console.log("Error fetching completed appointments:", error);
+  }
+};
+
 const formattedDate = computed(() => {
   return new Date().toLocaleDateString('pt-BR', {
     weekday: 'long',
@@ -32,9 +43,9 @@ const formattedDate = computed(() => {
   })
 })
 
-const attendedPatients = ref([
-  { id: 5, name: 'Roberto Carlos Lima', age: 52, type: 'Atendido', time: '09:30', status: 'attended' },
-])
+// const attendedPatients = ref([
+//   { id: 5, name: 'Roberto Carlos Lima', age: 52, type: 'Atendido', time: '09:30', status: 'attended' },
+// ])
 
 const filteredWaiting = computed(() =>
   todayAppointmentsByDoctor.value.filter(appointment =>
@@ -45,8 +56,10 @@ const filteredWaiting = computed(() =>
 )
 
 const filteredAttended = computed(() =>
-  attendedPatients.value.filter(p =>
-    p.name.toLowerCase().includes(searchQuery.value.toLowerCase())
+  todayCompletedAppointmentsByDoctor.value.filter(appointment =>
+    appointment.patient.name
+      .toLowerCase()
+      .includes(searchQuery.value.toLowerCase())
   )
 )
 
@@ -206,7 +219,7 @@ const selectPatient = (appointment) => {
 
           <div class="divide-y divide-gray-100">
             <div
-              v-for="patient in filteredAttended"
+              v-for="patient in todayCompletedAppointmentsByDoctor"
               :key="patient.id"
               class="flex items-center justify-between px-5 py-4 cursor-pointer hover:bg-gray-50 transition group"
               @click="selectPatient(patient)"
@@ -218,9 +231,9 @@ const selectPatient = (appointment) => {
                   </svg>
                 </div>
                 <div>
-                  <p class="text-sm font-medium text-gray-800">{{ patient.name }}</p>
+                  <p class="text-sm font-medium text-gray-800">{{ patient.patient.name }}</p>
                   <div class="flex items-center gap-2 mt-0.5">
-                    <span class="text-xs text-gray-400">{{ patient.age }} anos</span>
+                    <span class="text-xs text-gray-400">{{ patient.patient.age }} anos</span>
                     <span class="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-50 text-emerald-600">
                       Atendido
                     </span>
@@ -232,7 +245,7 @@ const selectPatient = (appointment) => {
                   <circle cx="12" cy="12" r="10" />
                   <path d="M12 6v6l4 2" />
                 </svg>
-                <span class="text-sm text-gray-500">{{ patient.time }}</span>
+                <span class="text-sm text-gray-500">{{ patient.scheduled_at.slice(11, 16) }}</span>
                 <svg class="w-4 h-4 text-gray-300 group-hover:text-gray-500 transition" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                   <path d="m9 18 6-6-6-6" />
                 </svg>
